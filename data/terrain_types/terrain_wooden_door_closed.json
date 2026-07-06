@@ -1,0 +1,23 @@
+{
+  "terrain_type_id": "wooden_door_closed",
+  "display_name": "关闭的木门",
+  "usage_type": "INTERACTIVE",
+  "material_type": "WOOD",
+  "mass": 50.0,
+  "friction_coefficient": 1.0,
+  "has_health": true,
+  "custom_max_health": 1000,
+  "is_attackable": true,
+  "is_interactive": true,
+  "transform_to_id": "wooden_door_open",
+  "is_passable": false,
+  "texture_paths": [
+	"res://textures/terrain/wooden_door/right.png",
+	"res://textures/terrain/wooden_door/left.png",
+	"res://textures/terrain/wooden_door/top.png",
+	"res://textures/terrain/wooden_door/bottom.png",
+	"res://textures/terrain/wooden_door_closed/front.png",
+	"res://textures/terrain/wooden_door/back.png"
+  ],
+  "base_height": 1
+}

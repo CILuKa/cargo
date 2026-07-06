@@ -1,0 +1,23 @@
+{
+  "terrain_type_id": "stone_wall",
+  "display_name": "石制墙壁",
+  "usage_type": "SOLID",
+  "material_type": "STONE",
+  "mass": 500.0,
+  "friction_coefficient": 1.0,
+  "has_health": true,
+  "custom_max_health": -1,
+  "is_attackable": false,
+  "is_interactive": false,
+  "transform_to_id": "",
+  "is_passable": false,
+  "texture_paths": [
+	"res://textures/terrain/stone_wall/right.png",
+	"res://textures/terrain/stone_wall/left.png",
+	"res://textures/terrain/stone_wall/top.png",
+	"res://textures/terrain/stone_wall/bottom.png",
+	"res://textures/terrain/stone_wall/front.png",
+	"res://textures/terrain/stone_wall/back.png"
+  ],
+  "base_height": 3
+}

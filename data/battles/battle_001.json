@@ -1,0 +1,89 @@
+{
+  "battle_id": "battle_001",
+  "name": "史莱姆遭遇战",
+  "background": "",
+  "tile_light_color": "#E0D4BD",
+  "tile_dark_color": "#847560",
+
+  "grid_cols": 70,
+  "grid_rows": 55,
+
+  "initial_terrain_type": "stone_floor",
+
+  "camera_look_at": {
+	"col": 5,
+	"row": 4,
+	"height": 1.0
+  },
+
+  "win_conditions": [
+	{
+	  "id": "flawless",
+	  "description": "完美胜利：消灭所有敌人",
+	  "type": "eliminate_all",
+	  "params": {"team": "enemy"},
+	  "next": "battle_001_flawless"
+	},
+	{
+	  "id": "retreat",
+	  "description": "击退敌人：消灭至少1个敌人",
+	  "type": "eliminate_count",
+	  "params": {"team": "enemy", "count": 1},
+	  "next": "battle_001_retreat"
+	},
+	{
+	  "id": "protect_success",
+	  "description": "保护成功：学生存活",
+	  "type": "unit_alive",
+	  "params": {"unit_id": "vip_student"},
+	  "next": "battle_001_win"
+	}
+  ],
+
+  "lose_conditions": [
+	{
+	  "id": "allied_dead",
+	  "description": "我方全灭",
+	  "type": "all_units_dead",
+	  "params": {"team": "player"},
+	  "next": "battle_001_lose"
+	},
+	{
+	  "id": "vip_dead",
+	  "description": "保护目标死亡",
+	  "type": "unit_dead",
+	  "params": {"unit_id": "vip_student"},
+	  "next": "battle_001_vip_dead"
+	}
+  ],
+
+  "units": [
+	{
+	  "id": "knight_1",
+	  "character_id": "knight",
+	  "type": "sprite",
+	  "col": 2,
+	  "row": 3,
+	  "texture": "res://assets/units/knight.png",
+	  "team": "player"
+	},
+	{
+	  "id": "vip_student",
+	  "character_id": "vip_student",
+	  "type": "sprite",
+	  "col": 4,
+	  "row": 3,
+	  "texture": "res://assets/units/student.png",
+	  "team": "neutral"
+	},
+	{
+	  "id": "slime_1",
+	  "character_id": "slime",
+	  "type": "sprite",
+	  "col": 7,
+	  "row": 6,
+	  "texture": "res://assets/units/goblin.png",
+	  "team": "enemy"
+	}
+  ]
+}

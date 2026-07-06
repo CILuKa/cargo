@@ -1,0 +1,115 @@
+{
+  "battle_id": "battle_002",
+  "name": "护送逃脱战",
+  "background": "",
+  "tile_light_color": "#C8D8C0",
+  "tile_dark_color": "#6B7B65",
+
+  "terrain": {
+	"tiles": [
+	  {"col": 0, "row": 0, "height": 2, "type": "wall"},
+	  {"col": 0, "row": 1, "height": 2, "type": "wall"},
+	  {"col": 0, "row": 8, "height": 2, "type": "wall"},
+	  {"col": 0, "row": 9, "height": 2, "type": "wall"},
+	  {"col": 9, "row": 0, "height": 2, "type": "wall"},
+	  {"col": 9, "row": 1, "height": 2, "type": "wall"},
+	  {"col": 9, "row": 8, "height": 2, "type": "wall"},
+	  {"col": 9, "row": 9, "height": 2, "type": "wall"},
+	  {"col": 4, "row": 5, "height": 1, "type": "hill"},
+	  {"col": 5, "row": 5, "height": 1, "type": "hill"},
+	  {"col": 4, "row": 6, "height": 2, "type": "hill"},
+	  {"col": 5, "row": 6, "height": 2, "type": "hill"}
+	]
+  },
+
+  "win_conditions": [
+	{
+	  "id": "escape_success",
+	  "description": "成功护送VIP到达撤离点",
+	  "type": "reach_zone",
+	  "params": {"unit_id": "vip_merchant", "zone": "escape_zone"},
+	  "next": "battle_002_escape"
+	},
+	{
+	  "id": "eliminate_enemies",
+	  "description": "消灭所有追兵",
+	  "type": "eliminate_all",
+	  "params": {"team": "enemy"},
+	  "next": "battle_002_eliminate"
+	}
+  ],
+
+  "lose_conditions": [
+	{
+	  "id": "vip_dead",
+	  "description": "VIP死亡",
+	  "type": "unit_dead",
+	  "params": {"unit_id": "vip_merchant"},
+	  "next": "battle_002_vip_dead"
+	},
+	{
+	  "id": "player_dead",
+	  "description": "我方全灭",
+	  "type": "all_units_dead",
+	  "params": {"team": "player"},
+	  "next": "battle_002_lose"
+	}
+  ],
+
+  "units": [
+	{
+	  "id": "knight_1",
+	  "type": "sprite",
+	  "col": 1,
+	  "row": 4,
+	  "texture": "res://assets/units/knight.png",
+	  "team": "player",
+	  "properties": {"hp": 12, "atk": 4, "def": 3, "name": "护航骑士"}
+	},
+	{
+	  "id": "archer_1",
+	  "type": "sprite",
+	  "col": 1,
+	  "row": 5,
+	  "texture": "res://assets/units/archer.png",
+	  "team": "player",
+	  "properties": {"hp": 8, "atk": 5, "def": 1, "name": "弓箭手"}
+	},
+	{
+	  "id": "vip_merchant",
+	  "type": "sprite",
+	  "col": 1,
+	  "row": 6,
+	  "texture": "res://assets/units/merchant.png",
+	  "team": "neutral",
+	  "properties": {"hp": 3, "atk": 0, "def": 0, "name": "商人（护送目标）", "speed": 2}
+	},
+	{
+	  "id": "bandit_1",
+	  "type": "sprite",
+	  "col": 8,
+	  "row": 3,
+	  "texture": "res://assets/units/bandit.png",
+	  "team": "enemy",
+	  "properties": {"hp": 6, "atk": 3, "def": 1, "name": "山贼A"}
+	},
+	{
+	  "id": "bandit_2",
+	  "type": "sprite",
+	  "col": 8,
+	  "row": 4,
+	  "texture": "res://assets/units/bandit.png",
+	  "team": "enemy",
+	  "properties": {"hp": 6, "atk": 3, "def": 1, "name": "山贼B"}
+	},
+	{
+	  "id": "bandit_boss",
+	  "type": "sprite",
+	  "col": 8,
+	  "row": 5,
+	  "texture": "res://assets/units/bandit_boss.png",
+	  "team": "enemy",
+	  "properties": {"hp": 10, "atk": 5, "def": 2, "name": "山贼头目"}
+	}
+  ]
+}

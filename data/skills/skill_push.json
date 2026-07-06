@@ -1,0 +1,16 @@
+{
+  "id": "push_force",
+  "name": "推力",
+  "description": "向目标施加动量冲量，目标质量越大获得的速度越小",
+  "type": "active",
+  "target_type": "any_single",
+  "range": 1,
+  "area": "single",
+  "effects": [
+	{
+	  "type": "apply_momentum",
+	  "impulse": 3,
+	  "direction_select": true
+	}
+  ]
+}

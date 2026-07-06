@@ -1,0 +1,16 @@
+{
+  "id": "basic_attack",
+  "name": "普通攻击",
+  "description": "对单个敌人造成基础物理伤害",
+  "type": "active",
+  "target_type": "enemy_single",
+  "range": 1,
+  "area": "single",
+  "effects": [
+	{
+	  "type": "damage",
+	  "formula": "atk * 1.0 - def * 0.5",
+	  "element": "physical"
+	}
+  ]
+}

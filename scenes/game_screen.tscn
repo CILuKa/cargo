@@ -1,0 +1,243 @@
+[gd_scene load_steps=6 format=3 uid="uid://15o54t3godrj"]
+
+[ext_resource type="Script" path="res://scripts/game_screen.gd" id="1_game_screen"]
+[ext_resource type="PackedScene" uid="uid://b4qd8bl4bab6d" path="res://scenes/save_load_window.tscn" id="2_save_load"]
+[ext_resource type="PackedScene" uid="uid://d0xhtxtlo0n" path="res://scenes/log_window.tscn" id="3_log"]
+[ext_resource type="PackedScene" uid="uid://bilv4hrbwu7tp" path="res://scenes/settings_window.tscn" id="4_settings"]
+[ext_resource type="PackedScene" uid="uid://bdtmjgw7beswu" path="res://scenes/tactics_board.tscn" id="5_tactics"]
+
+[node name="GameScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_game_screen")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CharacterLayer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="CharLeft" type="TextureRect" parent="CharacterLayer"]
+visible = false
+layout_mode = 1
+offset_left = 11.0
+offset_top = 5.0
+offset_right = 711.0
+offset_bottom = 1085.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CharCenter" type="TextureRect" parent="CharacterLayer"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -335.0
+offset_top = -537.0
+offset_right = 365.0
+offset_bottom = 543.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CharRight" type="TextureRect" parent="CharacterLayer"]
+visible = false
+layout_mode = 1
+offset_left = 1239.0
+offset_top = 5.0
+offset_right = 1939.0
+offset_bottom = 1085.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="DialogueBox" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -280.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="SpeakerLabel" type="Label" parent="DialogueBox"]
+layout_mode = 0
+offset_left = 30.0
+offset_top = 15.0
+offset_right = 400.0
+offset_bottom = 45.0
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="DialogueText" type="RichTextLabel" parent="DialogueBox"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 30.0
+offset_top = 55.0
+offset_right = -30.0
+offset_bottom = -15.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_font_sizes/normal_font_size = 22
+bbcode_enabled = true
+scroll_following = true
+
+[node name="ChoiceContainer" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 480.0
+offset_top = -400.0
+offset_right = -480.0
+offset_bottom = -320.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="ClickCatcher" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="StoryTreePanel" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TopBar" type="HBoxContainer" parent="StoryTreePanel"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 50.0
+grow_horizontal = 2
+
+[node name="TreeTitle" type="Label" parent="StoryTreePanel/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
+text = "  剧情树"
+
+[node name="TreeCloseButton" type="Button" parent="StoryTreePanel/TopBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "✕"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="StoryTreePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 50.0
+grow_horizontal = 2
+grow_vertical = 2
+follow_focus = true
+
+[node name="TreeHBox" type="HBoxContainer" parent="StoryTreePanel/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="BottomBar" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -80.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="LogButton" type="Button" parent="BottomBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "历史"
+
+[node name="SaveButton" type="Button" parent="BottomBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "保存"
+
+[node name="LoadButton" type="Button" parent="BottomBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "读取"
+
+[node name="StoryTreeButton" type="Button" parent="BottomBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "剧情树"
+
+[node name="AutoButton" type="Button" parent="BottomBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "自动"
+
+[node name="SettingsButton" type="Button" parent="BottomBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "设置"
+
+[node name="SkipButton" type="Button" parent="BottomBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "快进"
+
+[node name="TacticsButton" type="Button" parent="BottomBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "战棋"
+
+[node name="SaveLoadWindow" parent="." instance=ExtResource("2_save_load")]
+visible = false
+layout_mode = 1
+
+[node name="LogWindow" parent="." instance=ExtResource("3_log")]
+visible = false
+layout_mode = 1
+
+[node name="SettingsWindow" parent="." instance=ExtResource("4_settings")]
+visible = false
+layout_mode = 1
+
+[node name="TacticsBoard" parent="." instance=ExtResource("5_tactics")]
+visible = false
+layout_mode = 1

@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://bwl0y8b8wcnes"]
+
+[ext_resource type="Script" path="res://scripts/tactics_unit.gd" id="1_script"]
+
+[node name="TacticsUnit" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+billboard = 1
+
+[node name="NameLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+visible = false
+outline_size = 3

@@ -1,0 +1,15 @@
+{
+  "id": "basic_heal",
+  "name": "治愈术",
+  "description": "恢复目标生命值",
+  "type": "active",
+  "target_type": "ally_single",
+  "range": 2,
+  "area": "single",
+  "effects": [
+    {
+      "type": "heal",
+      "formula": "matk * 1.5 + 20"
+    }
+  ]
+}

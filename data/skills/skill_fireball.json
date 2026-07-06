@@ -1,0 +1,30 @@
+{
+  "id": "fireball",
+  "name": "火球术",
+  "description": "对单个敌人造成火焰伤害，目标生命低于50%时伤害提升",
+  "type": "active",
+  "target_type": "enemy_single",
+  "range": 3,
+  "area": "single",
+  "effects": [
+	{
+	  "type": "damage",
+	  "formula": "matk * 1.8 - mdef * 0.3",
+	  "element": "fire"
+	},
+	{
+	  "type": "condition",
+	  "condition": {
+		"type": "hp_below",
+		"value": 0.5
+	  },
+	  "effects": [
+		{
+		  "type": "damage",
+		  "formula": "matk * 0.5",
+		  "element": "fire"
+		}
+	  ]
+	}
+  ]
+}

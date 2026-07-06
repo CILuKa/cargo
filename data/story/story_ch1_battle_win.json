@@ -1,0 +1,58 @@
+{
+  "start_node": "battle_001_win",
+  "nodes": {
+	"battle_001_win": {
+	  "speaker": "小樱",
+	  "text": "你太厉害了！那些史莱姆完全不是你的对手！\n学生也安全了，真是太好了！",
+	  "next": "battle_001_flawless_choice",
+	  "effects": [
+		{"type": "char", "id": "heroine", "expression": "happy"},
+		{"type": "set_flag", "key": "battle_001_result", "value": "win"}
+	  ]
+	},
+	"battle_001_flawless_choice": {
+	  "speaker": "",
+	  "text": "战斗表现如何？",
+	  "next": "",
+	  "effects": [],
+	  "choices": [
+		{
+		  "text": "完美无伤",
+		  "next": "battle_001_flawless",
+		  "effects": [
+			{"type": "set_flag", "key": "battle_001_result", "value": "flawless"}
+		  ]
+		},
+		{
+		  "text": "勉强击退",
+		  "next": "battle_001_retreat",
+		  "effects": [
+			{"type": "set_flag", "key": "battle_001_result", "value": "retreat"}
+		  ]
+		}
+	  ]
+	},
+	"battle_001_flawless": {
+	  "speaker": "小樱",
+	  "text": "天啊！你竟然把所有史莱姆都消灭了！\n简直是完美的战斗！",
+	  "next": "back_to_main",
+	  "effects": [
+		{"type": "char", "id": "heroine", "expression": "happy"}
+	  ]
+	},
+	"battle_001_retreat": {
+	  "speaker": "小樱",
+	  "text": "你把史莱姆击退了！虽然还有几只逃跑了，\n但至少危机暂时解除了。",
+	  "next": "back_to_main",
+	  "effects": [
+		{"type": "char", "id": "heroine", "expression": "normal"}
+	  ]
+	},
+	"back_to_main": {
+	  "speaker": "",
+	  "text": "",
+	  "next": {"file": "res://data/story_chapter1.json", "node": "second_choice"},
+	  "effects": []
+	}
+  }
+}

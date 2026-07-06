@@ -1,0 +1,42 @@
+{
+  "grid_cols": 200,
+  "grid_rows": 200,
+  "excluded_tiles": [
+	{"col": 0, "row": 0},
+	{"col": 199, "row": 199}
+  ],
+  "terrain": {
+	"tiles": [
+	  {"col": 10, "row": 10, "height": 2, "type": "hill"},
+	  {"col": 50, "row": 50, "height": 5, "type": "mountain"}
+	]
+  },
+  "units": [
+	{
+	  "id": "player_1",
+	  "team": "player",
+	  "col": 10,
+	  "row": 10,
+	  "properties": {
+		"name": "主角",
+		"hp": 100,
+		"atk": 20,
+		"def": 10,
+		"speed": 5
+	  }
+	}
+  ],
+  "win_conditions": [
+	{"type": "destroy_all", "target_team": "enemy"}
+  ],
+  "lose_conditions": [
+	{"type": "unit_death", "unit_id": "player_1"}
+  ],
+  "camera_look_at": {
+	"x": 10,
+	"y": 1,
+	"z": 10
+  },
+  "tile_light_color": "#E0D4BD",
+  "tile_dark_color": "#847560"
+}

@@ -1,0 +1,55 @@
+{
+  "grid_cols": 20,
+  "grid_rows": 20,
+  "excluded_tiles": [],
+  "terrain": {
+    "instances": [
+      {
+        "terrain_type_id": "stone_floor",
+        "grid_pos": {"x": 5, "y": 5}
+      },
+      {
+        "terrain_type_id": "stone_floor",
+        "grid_pos": {"x": 6, "y": 5}
+      },
+      {
+        "terrain_type_id": "wooden_door_closed",
+        "grid_pos": {"x": 7, "y": 5}
+      },
+      {
+        "terrain_type_id": "stone_wall",
+        "grid_pos": {"x": 8, "y": 5}
+      },
+      {
+        "terrain_type_id": "metal_window",
+        "grid_pos": {"x": 9, "y": 5}
+      }
+    ]
+  },
+  "units": [
+    {
+      "id": "player_1",
+      "team": "player",
+      "col": 5,
+      "row": 5,
+      "properties": {
+        "name": "主角",
+        "hp": 100,
+        "atk": 20,
+        "def": 10,
+        "speed": 5
+      }
+    }
+  ],
+  "win_conditions": [
+    {"type": "destroy_all", "target_team": "enemy"}
+  ],
+  "lose_conditions": [
+    {"type": "unit_death", "unit_id": "player_1"}
+  ],
+  "camera_look_at": {
+    "x": 10,
+    "y": 1,
+    "z": 10
+  }
+}

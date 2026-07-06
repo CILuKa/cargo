@@ -1,0 +1,216 @@
+{
+  "start_node": "start",
+  "nodes": {
+	"start": {
+	  "speaker": "",
+	  "text": "春日的校园，樱花纷飞。\n这是新学期的第一天。",
+	  "next": "classroom",
+	  "effects": [
+		{"type": "bg", "file": "res://assets/backgrounds/school_gate.png", "transition": "fade"},
+		{"type": "bgm", "file": "res://assets/audio/bgm_spring.ogg"}
+	  ]
+	},
+	"classroom": {
+	  "speaker": "",
+	  "text": "走进教室，同学们已经三三两两地聚在一起聊天。\n你找到了自己的座位坐下。",
+	  "next": "meet_heroine",
+	  "effects": [
+		{"type": "bg", "file": "res://assets/backgrounds/classroom.png", "transition": "fade"}
+	  ]
+	},
+	"meet_heroine": {
+	  "speaker": "???",
+	  "text": "那个……你是新来的同学吗？",
+	  "next": "heroine_intro",
+	  "effects": [
+		{"type": "char", "id": "heroine", "action": "show", "pos": "right", "expression": "normal"},
+		{"type": "char", "id": "heroine", "action": "highlight"}
+	  ]
+	},
+	"heroine_intro": {
+	  "speaker": "小樱",
+	  "text": "我叫小樱，是班长。有什么不明白的可以问我哦！",
+	  "next": "first_choice",
+	  "effects": []
+	},
+	"first_choice": {
+	  "speaker": "",
+	  "text": "你想怎么回应？",
+	  "next": "",
+	  "effects": [],
+	  "choices": [
+		{
+		  "text": "友好地打招呼",
+		  "next": "choice_friendly",
+		  "effects": [
+			{"type": "set_flag", "key": "affection_heroine", "value": 10},
+			{"type": "set_flag", "key": "route", "value": "friendly"}
+		  ]
+		},
+		{
+		  "text": "冷淡地点头",
+		  "next": "choice_cold",
+		  "effects": [
+			{"type": "set_flag", "key": "affection_heroine", "value": 0},
+			{"type": "set_flag", "key": "route", "value": "cold"}
+		  ]
+		},
+		{
+		  "text": "害羞地低头",
+		  "next": "choice_shy",
+		  "effects": [
+			{"type": "set_flag", "key": "affection_heroine", "value": 5},
+			{"type": "set_flag", "key": "route", "value": "shy"}
+		  ]
+		}
+	  ]
+	},
+	"choice_friendly": {
+	  "speaker": "我",
+	  "text": "你好小樱！我是新来的，请多关照！",
+	  "next": "heroine_happy",
+	  "effects": [
+		{"type": "char", "id": "heroine", "expression": "happy"}
+	  ]
+	},
+	"heroine_happy": {
+	  "speaker": "小樱",
+	  "text": "嗯！很高兴认识你！\n对了，下课后要不要一起去社团参观？",
+	  "next": "battle_encounter",
+	  "effects": [
+		{"type": "set_flag", "key": "met_heroine", "value": true}
+	  ]
+	},
+	"battle_encounter": {
+	  "speaker": "",
+	  "text": "正要离开教室时，突然听到走廊里传来一阵骚动……\n史莱姆入侵了校园！\n一位学生被困在走廊里，快去救他！",
+	  "next": "",
+	  "effects": [
+		{"type": "battle", "config": "res://data/battles/battle_001.json", "name": "史莱姆遭遇战", "win_next": {"file": "res://data/story/story_ch1_battle_win.json", "node": "battle_001_win"}, "lose_next": "battle_001_lose"}
+	  ]
+	},
+	"battle_001_flawless": {
+	  "speaker": "小樱",
+	  "text": "太厉害了！你一个人就消灭了所有史莱姆！\n刚才那位同学也没受伤，真是完美的战斗！",
+	  "next": "second_choice",
+	  "effects": [
+		{"type": "char", "id": "heroine", "expression": "happy"},
+		{"type": "set_flag", "key": "battle_001_result", "value": "flawless"}
+	  ]
+	},
+	"battle_001_retreat": {
+	  "speaker": "小樱",
+	  "text": "你成功击退了史莱姆！\n虽然还有一些逃跑了，但至少我们救下了那位同学。",
+	  "next": "second_choice",
+	  "effects": [
+		{"type": "char", "id": "heroine", "expression": "smile"},
+		{"type": "set_flag", "key": "battle_001_result", "value": "retreat"}
+	  ]
+	},
+	"battle_001_win": {
+	  "speaker": "小樱",
+	  "text": "太好了，我们保护好那位同学了！\n你真是可靠呢。",
+	  "next": "second_choice",
+	  "effects": [
+		{"type": "char", "id": "heroine", "expression": "happy"},
+		{"type": "set_flag", "key": "battle_001_result", "value": "win"}
+	  ]
+	},
+	"battle_001_lose": {
+	  "speaker": "小樱",
+	  "text": "没关系，你只是还不熟悉战斗而已。\n来，我们去医务室包扎一下。",
+	  "next": "second_choice",
+	  "effects": [
+		{"type": "char", "id": "heroine", "expression": "worried"},
+		{"type": "set_flag", "key": "battle_001_result", "value": "lose"}
+	  ]
+	},
+	"battle_001_vip_dead": {
+	  "speaker": "小樱",
+	  "text": "不……那个学生……\n我们没能保护好他……",
+	  "next": "second_choice",
+	  "effects": [
+		{"type": "char", "id": "heroine", "expression": "worried"},
+		{"type": "set_flag", "key": "battle_001_result", "value": "vip_dead"}
+	  ]
+	},
+	"choice_cold": {
+	  "speaker": "我",
+	  "text": "……嗯。",
+	  "next": "heroine_worried",
+	  "effects": [
+		{"type": "char", "id": "heroine", "expression": "worried"}
+	  ]
+	},
+	"heroine_worried": {
+	  "speaker": "小樱",
+	  "text": "（他似乎不太想说话……）\n那个……有什么需要帮忙的可以随时找我。",
+	  "next": "second_choice",
+	  "effects": [
+		{"type": "set_flag", "key": "met_heroine", "value": true}
+	  ]
+	},
+	"choice_shy": {
+	  "speaker": "我",
+	  "text": "啊……嗯……你好……",
+	  "next": "heroine_smile",
+	  "effects": [
+		{"type": "char", "id": "heroine", "expression": "smile"}
+	  ]
+	},
+	"heroine_smile": {
+	  "speaker": "小樱",
+	  "text": "不用紧张啦！大家都是同学嘛。\n那个……要不要一起去社团参观？",
+	  "next": "second_choice",
+	  "effects": [
+		{"type": "set_flag", "key": "met_heroine", "value": true}
+	  ]
+	},
+	"second_choice": {
+	  "speaker": "",
+	  "text": "社团参观……去吗？",
+	  "next": "",
+	  "effects": [],
+	  "choices": [
+		{
+		  "text": "一起去",
+		  "next": "go_together",
+		  "effects": [
+			{"type": "set_flag", "key": "affection_heroine", "value": 20}
+		  ]
+		},
+		{
+		  "text": "今天先算了",
+		  "next": "go_home",
+		  "effects": [
+			{"type": "set_flag", "key": "affection_heroine", "value": 5}
+		  ]
+		}
+	  ]
+	},
+	"go_together": {
+	  "speaker": "我",
+	  "text": "好啊，一起去吧。",
+	  "next": "ending",
+	  "effects": [
+		{"type": "char", "id": "heroine", "expression": "happy"}
+	  ]
+	},
+	"go_home": {
+	  "speaker": "我",
+	  "text": "今天有点累了，改天吧。",
+	  "next": "ending",
+	  "effects": [
+		{"type": "char", "id": "heroine", "expression": "normal"}
+	  ]
+	},
+	"ending": {
+	  "speaker": "",
+	  "text": "第一章 完\n\n好感度：",
+	  "next": "",
+	  "effects": [
+		{"type": "set_flag", "key": "chapter", "value": 2}
+	  ]
+	}
+  }
+}
