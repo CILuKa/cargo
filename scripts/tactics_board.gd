@@ -3117,11 +3117,10 @@ func _on_round_started(round_num: int) -> void:
 		unit.remaining_move_points = unit.get_move_points(friction)
 		unit.has_acted = false
 
-## 每轮结束时结算所有单位的矢量速度
+## 每轮结束时处理
+## 注意：矢量速度结算已在 _end_current_unit_turn 中逐单位执行，不再在此统一结算
 func _on_round_ended(round_num: int) -> void:
 	print("[TacticsBoard] _on_round_ended: round=", round_num)
-	for unit in _turn_manager.get_alive_units():
-		_settle_velocity(unit)
 
 ## 回合开始
 func _on_battle_turn_started(unit: TacticsUnit) -> void:
