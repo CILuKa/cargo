@@ -7,9 +7,9 @@
   "range": 2,
   "area": "single",
   "effects": [
-    {
-      "type": "heal",
-      "formula": "matk * 1.5 + 20"
-    }
+	{
+	  "type": "heal",
+	  "formula": "matk * 1.5 + 20"
+	}
   ]
 }

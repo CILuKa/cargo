@@ -9,7 +9,7 @@
   "effects": [
 	{
 	  "type": "apply_momentum",
-	  "impulse": 3,
+	  "impulse": 1.5,
 	  "direction_select": true
 	}
   ]

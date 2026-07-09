@@ -178,6 +178,8 @@ enum CombatState {
 	ATTACK_MODE,        # 点击"攻击"后，显示攻击范围，等待点击目标
 	SKILL_TARGET_MODE,  # 选择技能后，显示技能范围，等待点击目标
 	DIRECTION_MODE,     # 推击技能选中目标后，等待选择8方向
+	THROW_TARGET_MODE,  # 投掷技能目标选择：26格立体范围
+	THROW_DIRECTION_MODE, # 投掷技能方向选择：26格可选方向
 	ACTION_SUB_MENU,    # 动作子菜单：跳下 / 交互
 	JUMP_DOWN_MODE,     # 跳下模式：周围八格高亮（限低2格+）
 	INTERACT_MODE       # 交互模式：周围八格白色框架（仅同层可交互地形）
@@ -215,6 +217,14 @@ var _pending_skill_id: String = ""
 
 ## 8方向选择的目标单位
 var _direction_target: TacticsUnit = null
+
+## 投掷技能的目标单位或地形格子（Vector3i(col, row, layer)）
+var _throw_target_pos: Vector3i = Vector3i(-1, -1, -1)
+var _throw_target_unit: TacticsUnit = null
+
+## 当前悬浮高亮的线框索引（用于改变颜色）
+var _hovered_wireframe_idx: int = -1
+var _hovered_wireframe_original_colors: Array = []
 
 ## 地形数据：{Vector2i(col,row): {height: int, type: String}}
 var _terrain_data: Dictionary = {}
@@ -494,6 +504,9 @@ func _create_tiles() -> void:
 			var key := Vector2i(col, row)
 			var terrain = _terrain_data.get(key, {"height": 0, "type_id": _initial_terrain_type})
 			var type_id: String = terrain.get("type_id", _initial_terrain_type)
+			# 确保type_id不是空气标记
+			if type_id == "__AIR__":
+				type_id = _initial_terrain_type
 			var height: int = terrain.get("height", 0)
 			var tile_node := _create_cube_tile(col, row, height, type_id, terrain.get("layers", []))
 			tile_container.add_child(tile_node)
@@ -549,11 +562,15 @@ func _load_terrain() -> void:
 		var row: int = t.get("row", 0)
 		var key := Vector2i(col, row)
 
-		# 新格式：layers 数组（每个元素是该层的地形类型ID）
+		# 新格式：layers 数组（每个元素是该层的地形类型ID，"__AIR__"表示空气层）
 		var layers: Array = t.get("layers", [])
 		if not layers.is_empty():
-			# 最顶层的类型作为该格子的主类型
-			var top_type_id: String = layers[-1]
+			# 找到最顶层非空气类型作为该格子的主类型
+			var top_type_id: String = _initial_terrain_type
+			for li in range(layers.size() - 1, -1, -1):
+				if layers[li] != "__AIR__":
+					top_type_id = layers[li]
+					break
 			# layers.size() = 层数（1层=地面），游戏height = 层数-1（0=地面）
 			var height: int = layers.size() - 1
 
@@ -644,9 +661,27 @@ func _create_cube_tile(col: int, row: int, height: int = 0, terrain_type: String
 	var pos := _grid_to_world(col, row)
 	root.position = Vector3(pos.x, 0, pos.z)
 
-	# 堆叠正方体（高度 ≥ 0，至少1层）
+	# 为整个方块添加一个 StaticBody3D 作为碰撞体（用于射线检测）
+	var static_body := StaticBody3D.new()
+	static_body.name = "CollisionBody"
+	# 设置碰撞层：第1层（默认物理层）+ 第5层（用于交互检测）
+	static_body.collision_layer = 0b00000000_00000000_00000000_00010001
+	root.add_child(static_body)
+
+	# 堆叠正方体（高度 ≥ 0，至少1层），跳过空气层
 	var total_layers := maxi(height, 0) + 1
+	# 找到最后一个非空气层索引，用于顶层着色
+	var last_real_layer := -1
+	for li in range(total_layers - 1, -1, -1):
+		if li >= layer_types.size() or layer_types[li] != "__AIR__":
+			last_real_layer = li
+			break
+
 	for layer in range(total_layers):
+		# 跳过空气层（不创建方块）
+		if layer < layer_types.size() and layer_types[layer] == "__AIR__":
+			continue
+
 		var mesh := BoxMesh.new()
 		mesh.size = Vector3(TILE_SIZE, TILE_SIZE, TILE_SIZE)
 
@@ -665,13 +700,22 @@ func _create_cube_tile(col: int, row: int, height: int = 0, terrain_type: String
 		var layer_color: Color = _get_terrain_color(layer_type, col, row)
 
 		var mat := StandardMaterial3D.new()
-		if layer == total_layers - 1:
+		if layer == last_real_layer:
 			mat.albedo_color = layer_color
 		else:
 			mat.albedo_color = layer_color.darkened(0.15)
 
 		cube.material_override = mat
 		root.add_child(cube)
+
+		# 为该层添加碰撞形状
+		var collision_shape := CollisionShape3D.new()
+		collision_shape.name = "Collision_L%d" % layer
+		var box_shape := BoxShape3D.new()
+		box_shape.size = Vector3(TILE_SIZE, TILE_SIZE, TILE_SIZE)
+		collision_shape.shape = box_shape
+		collision_shape.position = Vector3(0, TILE_SIZE * 0.5 + layer * TILE_SIZE, 0)
+		static_body.add_child(collision_shape)
 
 	return root
 
@@ -880,8 +924,9 @@ func _input(event: InputEvent) -> void:
 				_close_action_sub_menu()
 				return
 			if _action_menu_visible:
-				# 已有菜单可见时不处理
-				return
+				# 菜单可见时阻止棋盘点击（动作模式例外）
+				if _combat_state != CombatState.INTERACT_MODE and _combat_state != CombatState.THROW_TARGET_MODE and _combat_state != CombatState.THROW_DIRECTION_MODE and _combat_state != CombatState.JUMP_DOWN_MODE and _combat_state != CombatState.DIRECTION_MODE:
+					return
 			print("[TacticsBoard] 左键点击，全局位置: ", get_global_mouse_position())
 			_on_left_click(mb)
 
@@ -911,6 +956,10 @@ func _input(event: InputEvent) -> void:
 			camera.position += move
 			_camera_target += move
 
+		# 投掷/交互悬浮高亮
+		if _combat_state == CombatState.THROW_TARGET_MODE or _combat_state == CombatState.THROW_DIRECTION_MODE or _combat_state == CombatState.INTERACT_MODE:
+			_update_hover_highlight(get_global_mouse_position())
+
 
 ## GUI 输入处理（备用：当 _input 无法正常接收事件时使用）
 func _gui_input(event: InputEvent) -> void:
@@ -938,7 +987,8 @@ func _gui_input(event: InputEvent) -> void:
 				_close_action_sub_menu()
 				return
 			if _action_menu_visible:
-				return
+				if _combat_state != CombatState.INTERACT_MODE and _combat_state != CombatState.THROW_TARGET_MODE and _combat_state != CombatState.THROW_DIRECTION_MODE and _combat_state != CombatState.JUMP_DOWN_MODE and _combat_state != CombatState.DIRECTION_MODE:
+					return
 			print("[TacticsBoard] _gui_input: 左键点击")
 			_on_left_click(mb)
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP:
@@ -1457,13 +1507,33 @@ func _init_systems() -> void:
 
 ## 处理左键点击
 func _on_left_click(event: InputEventMouseButton) -> void:
-	# 行动菜单/技能菜单显示时不处理棋盘点击
-	if _action_menu_visible:
-		print("[TacticsBoard] _on_left_click: 行动菜单可见，跳过")
+	# 行动菜单/技能菜单显示时不处理棋盘点击（但动作模式例外）
+	if _action_menu_visible and _combat_state != CombatState.INTERACT_MODE and _combat_state != CombatState.THROW_TARGET_MODE and _combat_state != CombatState.THROW_DIRECTION_MODE and _combat_state != CombatState.JUMP_DOWN_MODE and _combat_state != CombatState.DIRECTION_MODE:
 		return
 
 	# 使用全局鼠标位置
 	var global_mouse := get_global_mouse_position()
+
+	# 3D线框选取模式：使用AABB检测，不受2D格子限制
+	# 这些模式在2D射线下可能返回(-1,-1)（如点击空中线框），
+	# 必须在2D检测之前单独处理
+	# 注意：3D检测失败时不自动取消模式，让用户可以继续尝试选取
+	if _combat_state == CombatState.THROW_TARGET_MODE:
+		var throw_target := _get_throw_target_3d(global_mouse)
+		if throw_target != Vector3i(-1, -1, -1):
+			_on_throw_target_selected(throw_target)
+		return
+	if _combat_state == CombatState.THROW_DIRECTION_MODE:
+		var throw_dir := _get_throw_direction_3d(global_mouse)
+		if throw_dir != Vector3i(-1, -1, -1):
+			_apply_throw_direction(throw_dir)
+		return
+	if _combat_state == CombatState.INTERACT_MODE:
+		var inter_3d := _get_throw_target_3d(global_mouse)
+		if inter_3d != Vector3i(-1, -1, -1):
+			_execute_interact(inter_3d.x, inter_3d.y)
+		return
+
 	var clicked_grid := _get_grid_from_mouse(global_mouse)
 	print("[TacticsBoard] _on_left_click: state=", _combat_state, " grid=", clicked_grid)
 	if clicked_grid == Vector2i(-1, -1):
@@ -1540,16 +1610,8 @@ func _on_left_click(event: InputEventMouseButton) -> void:
 			else:
 				_cancel_jump_down_mode()
 
-		CombatState.INTERACT_MODE:
-			# 交互：点击周围八格（同层可交互地形） → 执行交互
-			if _move_range.has(clicked_grid):
-				_execute_interact(col, row)
-			else:
-				_cancel_interact_mode()
 
-
-## 方向选择专用射线检测：从低到高扫描所有高度层，
-## 返回第一个在 _move_range 中的格子，避免高层地形抢占低层方向方块
+## 方向选择射线检测：使用3D地形方块射线检测，获取2D格子坐标
 func _get_grid_for_direction(screen_pos: Vector2) -> Vector2i:
 	if subviewport_container == null or camera == null:
 		return Vector2i(-1, -1)
@@ -1565,59 +1627,65 @@ func _get_grid_for_direction(screen_pos: Vector2) -> Vector2i:
 	if local_pos.x < 0 or local_pos.y < 0 or local_pos.x > container_size.x or local_pos.y > container_size.y:
 		return Vector2i(-1, -1)
 
-	var svp_size := svp.size
-	var svp_pos := Vector2(
-		local_pos.x / container_size.x * svp_size.x,
-		local_pos.y / container_size.y * svp_size.y
+	var viewport_pos := Vector2(
+		local_pos.x / container_size.x * svp.size.x,
+		local_pos.y / container_size.y * svp.size.y
 	)
 
-	var ray_origin := camera.project_ray_origin(svp_pos)
-	var ray_dir := camera.project_ray_normal(svp_pos)
+	# 使用3D射线检测地形方块
+	var from := camera.project_ray_origin(viewport_pos)
+	var to := from + camera.project_ray_normal(viewport_pos) * 100.0
 
-	if ray_dir.y >= 0:
+	var world_3d := svp.get_world_3d()
+	if world_3d == null:
 		return Vector2i(-1, -1)
+	var space_state := world_3d.direct_space_state
+	var params := PhysicsRayQueryParameters3D.create(from, to)
+	params.collision_mask = 0b00000000_00000000_00000000_00000001
+	params.collide_with_areas = false
 
-	var inv_transform := tile_container.global_transform.affine_inverse()
-	var local_origin := inv_transform * ray_origin
-	var local_dir := inv_transform.basis * ray_dir
-
-	var max_height := _get_max_terrain_height()
-
-	# 从低到高扫描：优先返回低层（离相机更近）且在 _move_range 中的格子
-	for h in range(0, max_height + 1):
-		var target_y := TILE_SIZE * (h + 1)
-		if local_dir.y >= 0:
-			continue
-		var t := (target_y - local_origin.y) / local_dir.y
-		if t < 0:
-			continue
-
-		var hit_x := local_origin.x + t * local_dir.x
-		var hit_z := local_origin.z + t * local_dir.z
-		var grid := _world_to_grid(Vector3(hit_x, target_y, hit_z))
-
-		if grid == Vector2i(-1, -1):
-			continue
-
+	var result := space_state.intersect_ray(params)
+	if not result.is_empty():
+		var hit_pos: Vector3 = result["position"]
+		var grid := _grid_from_world_pos(hit_pos)
 		if _move_range.has(grid):
 			return grid
 
-	# 兜底：Y=0 平面
-	var t0 := -local_origin.y / local_dir.y
-	if t0 >= 0:
-		var hit0_x := local_origin.x + t0 * local_dir.x
-		var hit0_z := local_origin.z + t0 * local_dir.z
-		var grid0 := _world_to_grid(Vector3(hit0_x, 0, hit0_z))
-		if _move_range.has(grid0):
-			return grid0
+	# 回退：使用数学方法遍历 _move_range 中的候选位置
+	return _get_grid_from_svp_direction(viewport_pos)
+
+
+## 方向模式回退检测：使用AABB数学方法遍历候选位置
+func _get_grid_from_svp_direction(svp_pos: Vector2) -> Vector2i:
+	if camera == null:
+		return Vector2i(-1, -1)
+
+	var from := camera.project_ray_origin(svp_pos)
+	var to := from + camera.project_ray_normal(svp_pos) * 100.0
+	var inv_transform := tile_container.global_transform.affine_inverse()
+	var local_origin := inv_transform * from
+	var local_ray := inv_transform.basis * camera.project_ray_normal(svp_pos)
+	var half := TILE_SIZE * 0.45
+
+	for pos in _move_range:
+		if not (pos is Vector2i):
+			continue
+		var p := pos as Vector2i
+		# 方向方块通常在单位所在高度（考虑空中高度）
+		var display_layer := _get_unit_effective_layer(_direction_target)
+		var aabb_center := Vector3(
+			(p.x - (_grid_cols - 1) * 0.5) * TILE_SIZE,
+			TILE_SIZE * (float(display_layer) + 0.5),
+			(p.y - (_grid_rows - 1) * 0.5) * TILE_SIZE
+		)
+		var t := _ray_aabb_intersect(local_origin, local_ray, aabb_center, Vector3(half, half, half))
+		if t > 0 and t < INF:
+			return p
 
 	return Vector2i(-1, -1)
 
 
-## 跳下模式专用射线检测：在角色当前高度层检测射线命中
-## 跳下方块悬空在角色高度（如 height=3），而非目标地形高度（如 height=0），
-## 标准 _get_grid_from_svp 要求 terrain_height >= scan_height，因此无法检测到悬空立方体。
-## 本函数仅计算射线与角色高度平面的交点，不做遮挡检测和地形校验。
+## 跳下模式射线检测：使用3D地形方块检测获取2D格子坐标
 func _get_grid_for_jump_down(screen_pos: Vector2) -> Vector2i:
 	if subviewport_container == null or camera == null or _selected_unit == null:
 		return Vector2i(-1, -1)
@@ -1633,37 +1701,50 @@ func _get_grid_for_jump_down(screen_pos: Vector2) -> Vector2i:
 	if local_pos.x < 0 or local_pos.y < 0 or local_pos.x > container_size.x or local_pos.y > container_size.y:
 		return Vector2i(-1, -1)
 
-	var svp_size := svp.size
-	var svp_pos := Vector2(
-		local_pos.x / container_size.x * svp_size.x,
-		local_pos.y / container_size.y * svp_size.y
+	var viewport_pos := Vector2(
+		local_pos.x / container_size.x * svp.size.x,
+		local_pos.y / container_size.y * svp.size.y
 	)
 
-	if camera == null:
-		return Vector2i(-1, -1)
+	# 使用3D射线检测地形方块
+	var from := camera.project_ray_origin(viewport_pos)
+	var to := from + camera.project_ray_normal(viewport_pos) * 100.0
 
-	var ray_origin := camera.project_ray_origin(svp_pos)
-	var ray_dir := camera.project_ray_normal(svp_pos)
+	var world_3d := svp.get_world_3d()
+	if world_3d != null:
+		var space_state := world_3d.direct_space_state
+		var params := PhysicsRayQueryParameters3D.create(from, to)
+		params.collision_mask = 0b00000000_00000000_00000000_00000001
+		params.collide_with_areas = false
 
-	if ray_dir.y >= 0:
-		return Vector2i(-1, -1)
+		var result := space_state.intersect_ray(params)
+		if not result.is_empty():
+			var hit_pos: Vector3 = result["position"]
+			var grid := _grid_from_world_pos(hit_pos)
+			if _move_range.has(grid):
+				return grid
 
+	# 回退：AABB数学方法（跳下方块悬浮在角色高度）
+	var current_height := _get_unit_effective_layer(_selected_unit)
 	var inv_transform := tile_container.global_transform.affine_inverse()
-	var local_origin := inv_transform * ray_origin
-	var local_dir := inv_transform.basis * ray_dir
+	var local_origin := inv_transform * from
+	var local_ray := inv_transform.basis * camera.project_ray_normal(viewport_pos)
+	var half := TILE_SIZE * 0.42
 
-	# 角色当前所在高度层（方块悬空显示的高度）
-	var current_height := _get_tile_height(_selected_unit.grid_pos.x, _selected_unit.grid_pos.y)
-	var target_y := TILE_SIZE * (current_height + 1)
+	for pos in _move_range:
+		if not (pos is Vector2i):
+			continue
+		var p := pos as Vector2i
+		var aabb_center := Vector3(
+			(p.x - (_grid_cols - 1) * 0.5) * TILE_SIZE,
+			TILE_SIZE * (float(current_height) + 1.0),
+			(p.y - (_grid_rows - 1) * 0.5) * TILE_SIZE
+		)
+		var t := _ray_aabb_intersect(local_origin, local_ray, aabb_center, Vector3(half, 0.04, half))
+		if t > 0 and t < INF:
+			return p
 
-	var t := (target_y - local_origin.y) / local_dir.y
-	if t <= 0:
-		return Vector2i(-1, -1)
-
-	var hit_x := local_origin.x + t * local_dir.x
-	var hit_z := local_origin.z + t * local_dir.z
-
-	return _world_to_grid(Vector3(hit_x, target_y, hit_z))
+	return Vector2i(-1, -1)
 
 
 ## 通过 SubViewport 坐标发射射线，获取命中的棋盘格子
@@ -1715,18 +1796,16 @@ func _get_grid_from_svp(svp_pos: Vector2) -> Vector2i:
 	return Vector2i(-1, -1)
 
 
-## 通过屏幕坐标获取棋盘格子坐标
-## 将屏幕坐标转换为 SubViewport 坐标后委托给 _get_grid_from_svp
+## 通过屏幕坐标获取棋盘格子坐标（二维）
+## 使用射线检测地形方块碰撞体，能检测方块的任何面（顶面、侧面、底面）
 func _get_grid_from_mouse(screen_pos: Vector2) -> Vector2i:
 	if subviewport_container == null or camera == null:
 		return Vector2i(-1, -1)
 
-	# 获取 SubViewport
 	var svp := subviewport_container.get_node_or_null("SubViewport") as SubViewport
 	if svp == null:
 		return Vector2i(-1, -1)
 
-	# 将屏幕坐标转换为 SubViewportContainer 内的局部坐标
 	var viewport_rect := subviewport_container.get_global_rect()
 	var local_pos := screen_pos - viewport_rect.position
 	var container_size := viewport_rect.size
@@ -1734,14 +1813,111 @@ func _get_grid_from_mouse(screen_pos: Vector2) -> Vector2i:
 	if local_pos.x < 0 or local_pos.y < 0 or local_pos.x > container_size.x or local_pos.y > container_size.y:
 		return Vector2i(-1, -1)
 
-	# 将容器坐标映射到 SubViewport 坐标
-	var svp_size := svp.size
-	var svp_pos := Vector2(
-		local_pos.x / container_size.x * svp_size.x,
-		local_pos.y / container_size.y * svp_size.y
+	var viewport_pos := Vector2(
+		local_pos.x / container_size.x * svp.size.x,
+		local_pos.y / container_size.y * svp.size.y
 	)
 
-	return _get_grid_from_svp(svp_pos)
+	# 射线检测：同时检测地形（层1 StaticBody3D）和单位（层2 Area3D）
+	var from := camera.project_ray_origin(viewport_pos)
+	var to := from + camera.project_ray_normal(viewport_pos) * 100.0
+
+	var world_3d := svp.get_world_3d()
+	if world_3d != null:
+		var space_state := world_3d.direct_space_state
+
+		# 先检测单位（层2 Area3D）— 用于选取空中单位
+		var unit_params := PhysicsRayQueryParameters3D.create(from, to)
+		unit_params.collision_mask = 0b00000000_00000000_00000000_00000010
+		unit_params.collide_with_areas = true
+		unit_params.collide_with_bodies = false
+		var unit_result := space_state.intersect_ray(unit_params)
+		if not unit_result.is_empty():
+			# 从 Area3D 向上查找 TacticsUnit 节点
+			var node: Node = unit_result["collider"]
+			while node != null:
+				if node is TacticsUnit:
+					var unit: TacticsUnit = node
+					if not unit.is_dead():
+						return unit.grid_pos
+					break  # 死亡单位，继续检测地形
+				node = node.get_parent()
+
+		# 再检测地形（层1 StaticBody3D）
+		var terrain_params := PhysicsRayQueryParameters3D.create(from, to)
+		terrain_params.collision_mask = 0b00000000_00000000_00000000_00000001
+		terrain_params.collide_with_areas = false
+		terrain_params.collide_with_bodies = true
+		var result := space_state.intersect_ray(terrain_params)
+		if not result.is_empty():
+			var hit_pos: Vector3 = result["position"]
+			return _grid_from_world_pos(hit_pos)
+
+	# 回退：平面扫描方法
+	return _get_grid_from_svp(viewport_pos)
+
+
+## 从世界坐标计算格子坐标
+func _grid_from_world_pos(world_pos: Vector3) -> Vector2i:
+	var col_f: float = world_pos.x / TILE_SIZE + (_grid_cols - 1) * 0.5
+	var row_f: float = world_pos.z / TILE_SIZE + (_grid_rows - 1) * 0.5
+	var col := floori(col_f + 0.5)
+	var row := floori(row_f + 0.5)
+	if not _is_valid_tile(col, row):
+		return Vector2i(-1, -1)
+	return Vector2i(col, row)
+
+
+## 通过屏幕坐标获取三维格子坐标（包括高度层）
+## 使用射线检测地形方块的碰撞体，返回 (col, row, layer)
+func _get_3d_grid_from_mouse(screen_pos: Vector2) -> Vector3i:
+	if subviewport_container == null or camera == null:
+		return Vector3i(-1, -1, -1)
+
+	var svp := subviewport_container.get_node_or_null("SubViewport") as SubViewport
+	if svp == null:
+		return Vector3i(-1, -1, -1)
+
+	var viewport_rect := subviewport_container.get_global_rect()
+	var local_pos := screen_pos - viewport_rect.position
+	var container_size := viewport_rect.size
+
+	if local_pos.x < 0 or local_pos.y < 0 or local_pos.x > container_size.x or local_pos.y > container_size.y:
+		return Vector3i(-1, -1, -1)
+
+	var viewport_pos := Vector2(
+		local_pos.x / container_size.x * svp.size.x,
+		local_pos.y / container_size.y * svp.size.y
+	)
+
+	# 射线检测地形方块
+	var from := camera.project_ray_origin(viewport_pos)
+	var to := from + camera.project_ray_normal(viewport_pos) * 100.0
+
+	var world_3d := svp.get_world_3d()
+	if world_3d == null:
+		return Vector3i(-1, -1, -1)
+	var space_state := world_3d.direct_space_state
+	var params := PhysicsRayQueryParameters3D.create(from, to)
+	# 只检测第1层（地形方块）
+	params.collision_mask = 0b00000000_00000000_00000000_00000001
+	params.collide_with_areas = false
+
+	var result := space_state.intersect_ray(params)
+	if not result.is_empty():
+		var hit_pos: Vector3 = result["position"]
+		var grid_pos := _grid_from_world_pos(hit_pos)
+		if grid_pos == Vector2i(-1, -1):
+			return Vector3i(-1, -1, -1)
+		var col := grid_pos.x
+		var row := grid_pos.y
+		# 计算高度层（从 Y 坐标推算）
+		var layer := int(round(hit_pos.y / TILE_SIZE - 0.5))
+		var tile_height := _get_tile_height(col, row)
+		layer = clampi(layer, 0, tile_height)
+		return Vector3i(col, row, layer)
+
+	return Vector3i(-1, -1, -1)
 
 
 ## 检测射线是否被地形阻挡
@@ -1809,10 +1985,11 @@ func _check_terrain_occlusion(local_origin: Vector3, local_dir: Vector3, target_
 
 ## 世界坐标 → 网格坐标（近似，用于点击检测）
 func _world_to_grid(pos: Vector3) -> Vector2i:
+	# 使用 floori 来获取格子坐标，避免边界处返回错误的格子
 	var col_f := pos.x / TILE_SIZE + (_grid_cols - 1) * 0.5
 	var row_f := pos.z / TILE_SIZE + (_grid_rows - 1) * 0.5
-	var col := roundi(col_f)
-	var row := roundi(row_f)
+	var col := floori(col_f + 0.5)  # 四舍五入到最近的整数
+	var row := floori(row_f + 0.5)
 
 	if not _is_valid_tile(col, row):
 		return Vector2i(-1, -1)
@@ -1950,6 +2127,7 @@ func _clear_move_range() -> void:
 			cube.queue_free()
 	_move_range_cubes.clear()
 	_move_range.clear()
+	_hovered_wireframe_idx = -1  # 重置悬浮索引
 
 
 ## 创建移动范围高亮立方体
@@ -2191,7 +2369,7 @@ func _close_action_menu() -> void:
 # 动作子菜单
 # =============================================================================
 
-## 显示动作子菜单（跳下 / 交互）
+## 显示动作子菜单（跳下 / 交互 / 投掷）
 func _on_action_sub_menu() -> void:
 	# 关闭已有的子菜单
 	_close_action_sub_menu()
@@ -2199,7 +2377,7 @@ func _on_action_sub_menu() -> void:
 
 	var sub_menu := Panel.new()
 	sub_menu.name = "ActionSubMenu"
-	sub_menu.size = Vector2(160, 100)
+	sub_menu.size = Vector2(160, 130)  # 增加高度以容纳投掷按钮
 	# 定位在动作按钮右侧
 	sub_menu.position = Vector2(245, 20)
 
@@ -2221,6 +2399,10 @@ func _on_action_sub_menu() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_color_override("font_color", Color(0.8, 0.8, 0.5))
 	vbox.add_child(title)
+
+	# 投掷按钮
+	var throw_btn := _create_action_button("投掷", _on_action_throw)
+	vbox.add_child(throw_btn)
 
 	# 跳下按钮
 	var jump_btn := _create_action_button("跳下", _on_action_jump_down)
@@ -2323,10 +2505,23 @@ func _on_action_jump_down() -> void:
 	_show_jump_down_range(_selected_unit)
 
 
+## 投掷动作：进入投掷目标选择模式
+func _on_action_throw() -> void:
+	_close_action_sub_menu()
+	_close_action_menu()
+
+	if _selected_unit == null:
+		return
+
+	# 投掷是动作而非技能，不设置 _pending_skill_id
+	_combat_state = CombatState.THROW_TARGET_MODE
+	_show_throw_target_range(_selected_unit)
+
+
 func _show_jump_down_range(unit: TacticsUnit) -> void:
 	_clear_move_range()
 	var center := unit.grid_pos
-	var current_height := _get_tile_height(center.x, center.y)
+	var current_height := _get_unit_effective_layer(unit)
 
 	for dy in range(-1, 2):
 		for dx in range(-1, 2):
@@ -2392,7 +2587,7 @@ func _execute_jump_down(col: int, row: int) -> void:
 	_selected_unit.physics.fall_height = float(height_diff)
 	_selected_unit.physics.is_airborne = true
 	_selected_unit.physics.velocity = Vector2.ZERO
-	_selected_unit.position = _grid_to_world_top(col, row, float(height_diff))
+	_selected_unit.position = _grid_to_world_top(col, row, -1, float(height_diff))
 
 	# 更新 _unit_data
 	if _unit_data.has(_selected_unit.unit_id):
@@ -2439,7 +2634,7 @@ func _on_action_interact() -> void:
 func _show_interact_range(unit: TacticsUnit) -> void:
 	_clear_move_range()
 	var center := unit.grid_pos
-	var current_height := _get_tile_height(center.x, center.y)
+	var current_height := _get_unit_effective_layer(unit)
 
 	# 显示8个相邻格子的白色线框（无论是否可交互）
 	for dy in range(-1, 2):
@@ -2457,16 +2652,20 @@ func _show_interact_range(unit: TacticsUnit) -> void:
 
 			# 高度差 ≤ 1 且可交互的地形才能点击
 			if absi(target_height - current_height) <= 1 and _is_tile_interactive(tx, ty):
-				_move_range.append(Vector2i(tx, ty))
+				_move_range.append(Vector3i(tx, ty, target_height))
 
-	# 头顶：同col/row，高度+1（如果存在该高度的格子）
+	# 头顶：同col/row，高度+1（如果可交互）
 	var above_height := current_height + 1
 	_create_interact_wireframe_cube(center.x, center.y, above_height)
+	if _is_tile_interactive(center.x, center.y):
+		_move_range.append(Vector3i(center.x, center.y, above_height))
 
-	# 脚下：同col/row，高度-1（如果 >= 0）
+	# 脚下：同col/row，高度-1（如果 >= 0 且可交互）
 	if current_height > 0:
 		var below_height := current_height - 1
 		_create_interact_wireframe_cube(center.x, center.y, below_height)
+		if _is_tile_interactive(center.x, center.y):
+			_move_range.append(Vector3i(center.x, center.y, below_height))
 
 	_highlight_type = "interact"
 
@@ -2493,55 +2692,9 @@ func _is_tile_passable(col: int, row: int) -> bool:
 
 
 ## 创建交互目标白色线框立方体（只有棱、无面）
-## @param wire_height: 线框所在高度（可指定头顶/脚下等非当前地形高度的位置）
 func _create_interact_wireframe_cube(col: int, row: int, wire_height: int = -1) -> void:
-	# 方式：创建一个边线立方体，使用12条细线组成立方体框架
 	var height: int = wire_height if wire_height >= 0 else _get_tile_height(col, row)
-	var pos := _grid_to_world(col, row)
-	var center_y: float = TILE_SIZE * (float(height) + 0.5)
-	var half: float = TILE_SIZE * 0.5
-
-	var wire_color := Color(1.0, 1.0, 1.0, 0.85)
-
-	# 12条边：用细长的BoxMesh每条边拼成白色框架
-	# 定义12条边的中心位置和尺寸：(center, size)
-	var edges: Array[Dictionary] = [
-		# 底部4条边 (y = center_y - half)
-		{"center": Vector3(pos.x + half, center_y - half, pos.z + half), "size": Vector3(TILE_SIZE, 0.04, 0.04)},  # Z+
-		{"center": Vector3(pos.x + half, center_y - half, pos.z - half), "size": Vector3(TILE_SIZE, 0.04, 0.04)},  # Z-
-		{"center": Vector3(pos.x + half, center_y - half, pos.z + half), "size": Vector3(0.04, 0.04, TILE_SIZE)},  # X+
-		{"center": Vector3(pos.x - half, center_y - half, pos.z + half), "size": Vector3(0.04, 0.04, TILE_SIZE)},  # X-
-		# 顶部4条边 (y = center_y + half)
-		{"center": Vector3(pos.x + half, center_y + half, pos.z + half), "size": Vector3(TILE_SIZE, 0.04, 0.04)},
-		{"center": Vector3(pos.x + half, center_y + half, pos.z - half), "size": Vector3(TILE_SIZE, 0.04, 0.04)},
-		{"center": Vector3(pos.x + half, center_y + half, pos.z + half), "size": Vector3(0.04, 0.04, TILE_SIZE)},
-		{"center": Vector3(pos.x - half, center_y + half, pos.z + half), "size": Vector3(0.04, 0.04, TILE_SIZE)},
-		# 4条垂直边
-		{"center": Vector3(pos.x + half, center_y, pos.z + half), "size": Vector3(0.04, TILE_SIZE, 0.04)},
-		{"center": Vector3(pos.x + half, center_y, pos.z - half), "size": Vector3(0.04, TILE_SIZE, 0.04)},
-		{"center": Vector3(pos.x - half, center_y, pos.z + half), "size": Vector3(0.04, TILE_SIZE, 0.04)},
-		{"center": Vector3(pos.x - half, center_y, pos.z - half), "size": Vector3(0.04, TILE_SIZE, 0.04)},
-	]
-
-	# 用 Node3D 作为容器，方便清除时一起删除
-	var wireframe_root := Node3D.new()
-
-	for edge in edges:
-		var edge_mesh := MeshInstance3D.new()
-		var box := BoxMesh.new()
-		box.size = edge["size"]
-		edge_mesh.mesh = box
-		edge_mesh.position = edge["center"]
-
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = wire_color
-		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		edge_mesh.material_override = mat
-
-		wireframe_root.add_child(edge_mesh)
-
-	tile_container.add_child(wireframe_root)
-	_move_range_cubes.append(wireframe_root)
+	_create_wireframe_cube(col, row, height, "Interact", Color(1.0, 1.0, 1.0, 0.85))
 
 
 ## 执行交互：将可交互地形转换为目标地形
@@ -2750,6 +2903,19 @@ func _on_skill_selected(skill_id: String) -> void:
 	if _selected_unit == null:
 		return
 
+	var skill_data: Dictionary = _skill_system.get_skill(skill_id)
+	if skill_data.is_empty():
+		return
+
+	# 检查是否为投掷技能（range_mode == "cube_26"）
+	var range_mode: String = skill_data.get("range_mode", "")
+	if range_mode == "cube_26":
+		# 进入投掷目标选择模式
+		_pending_skill_id = skill_id
+		_combat_state = CombatState.THROW_TARGET_MODE
+		_show_throw_target_range(_selected_unit)
+		return
+
 	_pending_skill_id = skill_id
 	_combat_state = CombatState.SKILL_TARGET_MODE
 	_show_skill_range(_selected_unit, skill_id)
@@ -2875,15 +3041,17 @@ func _show_direction_ui(target: TacticsUnit) -> void:
 
 
 ## 创建方向选择高亮（箭头状）
+## 使用目标单位的有效高度层（考虑空中高度），确保方向方块与单位在同一视觉高度
 func _create_direction_cube(col: int, row: int) -> void:
 	var cube := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(TILE_SIZE * 0.8, 0.06, TILE_SIZE * 0.8)
 	cube.mesh = mesh
 
-	var height := _get_tile_height(col, row)
+	# 使用目标单位的有效高度（考虑空中状态），而非地形高度
+	var display_layer := _get_unit_effective_layer(_direction_target) if _direction_target != null else _get_tile_height(col, row)
 	var pos := _grid_to_world(col, row)
-	cube.position = Vector3(pos.x, TILE_SIZE * (height + 1) + 0.03, pos.z)
+	cube.position = Vector3(pos.x, TILE_SIZE * (display_layer + 1) + 0.03, pos.z)
 
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(1.0, 0.8, 0.2, 0.6)
@@ -3144,6 +3312,35 @@ func _get_unit_at(col: int, row: int) -> TacticsUnit:
 	return null
 
 
+## 根据格子坐标和高度层查找单位（3D版本，考虑空中高度）
+## @param col: 列坐标
+## @param row: 行坐标
+## @param layer: 高度层（可选，-1表示不检查高度层，只检查格子坐标）
+func _get_unit_at_layer(col: int, row: int, layer: int = -1) -> TacticsUnit:
+	for unit_id in _unit_nodes:
+		var unit: TacticsUnit = _unit_nodes[unit_id]
+		if unit.is_dead():
+			continue
+		if unit.grid_pos != Vector2i(col, row):
+			continue
+		if layer < 0:
+			return unit  # 不检查高度层，返回第一个匹配的
+		var unit_layer := _get_unit_effective_layer(unit)
+		if unit_layer == layer:
+			return unit
+	return null
+
+
+## 计算单位的有效高度层（考虑地形高度 + 空中高度）
+## 用于线框放置和3D选取，确保空中单位的线框显示在正确的高度
+func _get_unit_effective_layer(unit: TacticsUnit) -> int:
+	if unit.physics.is_airborne and unit.physics.air_height > 0.0:
+		var terrain_h := _get_tile_height(unit.grid_pos.x, unit.grid_pos.y)
+		var air_layers := int(round(unit.physics.air_height / TILE_SIZE))
+		return terrain_h + air_layers
+	return _get_tile_height(unit.grid_pos.x, unit.grid_pos.y)
+
+
 ## 获取被占据的格子 {pos: unit_id}
 func _get_occupied_tiles() -> Dictionary:
 	var result: Dictionary = {}
@@ -3197,3 +3394,459 @@ func get_current_round() -> int:
 	if _turn_manager:
 		return _turn_manager.get_current_round()
 	return 0
+
+
+# =============================================================================
+# 投掷技能 — 26格立体范围目标选择 + 26格方向选择
+# =============================================================================
+
+## 显示投掷技能目标选择范围（以操作角色为中心的26格立体范围）
+## 只显示有地形方块或单位的格子
+## 中心高度层使用单位的实际高度（含air_height），空中单位的线框在正确高度
+func _show_throw_target_range(unit: TacticsUnit) -> void:
+	_clear_move_range()
+	var center_col := unit.grid_pos.x
+	var center_row := unit.grid_pos.y
+	var center_layer := _get_unit_effective_layer(unit)
+
+	# 3x3x3立体范围（排除中心）
+	for dl in range(-1, 2):  # 高度层偏移
+		for dr in range(-1, 2):  # row偏移
+			for dc in range(-1, 2):  # col偏移
+				if dc == 0 and dr == 0 and dl == 0:
+					continue  # 排除中心
+
+				var tc := center_col + dc
+				var tr := center_row + dr
+				var tl := center_layer + dl
+
+				# 检查格子是否有效
+				if not _is_valid_tile(tc, tr):
+					continue
+				# 检查高度层是否有效（不能低于地面）
+				if tl < 0:
+					continue
+
+				# 检查该位置是否有地形方块或单位（排除操作角色自己）
+				var has_terrain: bool = _has_terrain_at_layer(tc, tr, tl)
+				var unit_at := _get_unit_at(tc, tr)
+				var has_unit: bool = unit_at != null and unit_at != unit
+
+				if not has_terrain and not has_unit:
+					continue
+
+				# 在当前层创建线框（地形/单位/两者都有）
+				_create_throw_wireframe_cube(tc, tr, tl)
+				_move_range.append(Vector3i(tc, tr, tl))
+
+				# 如果有空中单位且其有效高度层不在当前3x3x3范围内，额外创建一层线框
+				if has_unit and unit_at.physics.is_airborne and unit_at.physics.air_height > 0.0:
+					var unit_effective := _get_unit_effective_layer(unit_at)
+					if unit_effective != tl:
+						# 空中单位在其有效高度层也需要一个线框
+						_create_throw_wireframe_cube(tc, tr, unit_effective)
+						_move_range.append(Vector3i(tc, tr, unit_effective))
+
+	_highlight_type = "throw_target"
+
+
+## 检查指定位置在指定高度层是否有地形方块
+func _has_terrain_at_layer(col: int, row: int, layer: int) -> bool:
+	var tile_height := _get_tile_height(col, row)
+	# 如果地形高度 >= layer，说明该层有地形方块
+	return tile_height >= layer
+
+
+## 统一创建线框立方体（正确的立方体框架，12条边无缝衔接）
+## @param name_prefix: 节点名前缀（如 "ThrowTarget", "ThrowDir", "Interact"）
+## @param color: 线框颜色
+func _create_wireframe_cube(col: int, row: int, layer: int, name_prefix: String, color: Color) -> Node3D:
+	var pos := _grid_to_world(col, row)
+	var center_y: float = TILE_SIZE * (float(layer) + 0.5)
+	var half: float = TILE_SIZE * 0.5
+
+	# 正确的12条边（使用 pos.x 和 pos.z 作为中心，不自出头）
+	var edges: Array[Dictionary] = [
+		# 底部4条边 — X方向边（中心X，Z±，底部Y）
+		{"center": Vector3(pos.x, center_y - half, pos.z - half), "size": Vector3(TILE_SIZE, 0.04, 0.04)},
+		{"center": Vector3(pos.x, center_y - half, pos.z + half), "size": Vector3(TILE_SIZE, 0.04, 0.04)},
+		# 底部4条边 — Z方向边（中心Z，X±，底部Y）
+		{"center": Vector3(pos.x - half, center_y - half, pos.z), "size": Vector3(0.04, 0.04, TILE_SIZE)},
+		{"center": Vector3(pos.x + half, center_y - half, pos.z), "size": Vector3(0.04, 0.04, TILE_SIZE)},
+		# 顶部4条边 — X方向边
+		{"center": Vector3(pos.x, center_y + half, pos.z - half), "size": Vector3(TILE_SIZE, 0.04, 0.04)},
+		{"center": Vector3(pos.x, center_y + half, pos.z + half), "size": Vector3(TILE_SIZE, 0.04, 0.04)},
+		# 顶部4条边 — Z方向边
+		{"center": Vector3(pos.x - half, center_y + half, pos.z), "size": Vector3(0.04, 0.04, TILE_SIZE)},
+		{"center": Vector3(pos.x + half, center_y + half, pos.z), "size": Vector3(0.04, 0.04, TILE_SIZE)},
+		# 4条垂直边
+		{"center": Vector3(pos.x - half, center_y, pos.z - half), "size": Vector3(0.04, TILE_SIZE, 0.04)},
+		{"center": Vector3(pos.x - half, center_y, pos.z + half), "size": Vector3(0.04, TILE_SIZE, 0.04)},
+		{"center": Vector3(pos.x + half, center_y, pos.z - half), "size": Vector3(0.04, TILE_SIZE, 0.04)},
+		{"center": Vector3(pos.x + half, center_y, pos.z + half), "size": Vector3(0.04, TILE_SIZE, 0.04)},
+	]
+
+	var wireframe_root := Node3D.new()
+	wireframe_root.name = "%s_%d_%d_%d" % [name_prefix, col, row, layer]
+
+	for edge in edges:
+		var edge_mesh := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = edge["size"]
+		edge_mesh.mesh = box
+		edge_mesh.position = edge["center"]
+
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = color
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		edge_mesh.material_override = mat
+
+		wireframe_root.add_child(edge_mesh)
+
+	tile_container.add_child(wireframe_root)
+	_move_range_cubes.append(wireframe_root)
+	return wireframe_root
+
+
+## 创建投掷目标线框立方体（白色）
+func _create_throw_wireframe_cube(col: int, row: int, layer: int) -> void:
+	_create_wireframe_cube(col, row, layer, "ThrowTarget", Color(1.0, 1.0, 1.0, 0.85))
+
+
+## 获取鼠标点击的投掷目标3D位置
+## 使用数学方法计算射线与候选格子的 AABB 相交
+func _get_throw_target_3d(screen_pos: Vector2) -> Vector3i:
+	if subviewport_container == null or camera == null:
+		return Vector3i(-1, -1, -1)
+
+	var svp := subviewport_container.get_node_or_null("SubViewport") as SubViewport
+	if svp == null:
+		return Vector3i(-1, -1, -1)
+
+	var viewport_rect := subviewport_container.get_global_rect()
+	var local_pos := screen_pos - viewport_rect.position
+	var container_size := viewport_rect.size
+
+	if local_pos.x < 0 or local_pos.y < 0 or local_pos.x > container_size.x or local_pos.y > container_size.y:
+		return Vector3i(-1, -1, -1)
+
+	var viewport_pos := Vector2(
+		local_pos.x / container_size.x * svp.size.x,
+		local_pos.y / container_size.y * svp.size.y
+	)
+
+	# 计算射线，转换到 tile_container 本地空间
+	var from := camera.project_ray_origin(viewport_pos)
+	var to := from + camera.project_ray_normal(viewport_pos) * 100.0
+
+	var inv_transform := tile_container.global_transform.affine_inverse()
+	var local_origin := inv_transform * from
+	var local_ray := inv_transform.basis * camera.project_ray_normal(viewport_pos)
+
+	# 遍历所有候选位置，检查射线-AABB 相交
+	var best_t: float = INF
+	var best_pos := Vector3i(-1, -1, -1)
+	var half := TILE_SIZE * 0.45  # 略小于半边，避免边界重叠
+
+	for pos in _move_range:
+		if not (pos is Vector3i):
+			continue
+		var p := pos as Vector3i
+		# 计算该格子的 AABB 中心
+		var aabb_center := Vector3(
+			(p.x - (_grid_cols - 1) * 0.5) * TILE_SIZE,
+			TILE_SIZE * (float(p.z) + 0.5),
+			(p.y - (_grid_rows - 1) * 0.5) * TILE_SIZE
+		)
+		# AABB 射线相交测试
+		var t := _ray_aabb_intersect(local_origin, local_ray, aabb_center, Vector3(half, half, half))
+		if t > 0 and t < best_t:
+			best_t = t
+			best_pos = p
+
+	return best_pos
+
+
+## 射线与 AABB 相交测试（返回最近交点距离 t，无交点返回 INF）
+func _ray_aabb_intersect(origin: Vector3, dir: Vector3, box_center: Vector3, box_half: Vector3) -> float:
+	var t_min: float = -INF
+	var t_max: float = INF
+	var inv_dir := Vector3(1.0 / dir.x, 1.0 / dir.y, 1.0 / dir.z)
+
+	for i in range(3):
+		var lo := box_center[i] - box_half[i] - origin[i]
+		var hi := box_center[i] + box_half[i] - origin[i]
+		var t1 := lo * inv_dir[i]
+		var t2 := hi * inv_dir[i]
+		if t1 > t2:
+			var tmp := t1; t1 = t2; t2 = tmp
+		if t1 > t_min:
+			t_min = t1
+		if t2 < t_max:
+			t_max = t2
+		if t_min > t_max:
+			return INF
+
+	if t_min > 0:
+		return t_min
+	elif t_max > 0:
+		return t_max
+	return INF
+
+
+## 投掷目标选择完成：进入方向选择模式
+func _on_throw_target_selected(target_pos: Vector3i) -> void:
+	_clear_move_range()
+
+	_throw_target_pos = target_pos
+
+	# 检查目标位置是否有单位（禁止投掷自己），优先匹配高度层
+	var unit_at_target := _get_unit_at_layer(target_pos.x, target_pos.y, target_pos.z)
+	if unit_at_target == null:
+		# 回退到2D查找（兼容地形投掷等场景）
+		unit_at_target = _get_unit_at(target_pos.x, target_pos.y)
+	if unit_at_target == _selected_unit:
+		unit_at_target = null
+	_throw_target_unit = unit_at_target
+
+	# 检查行动点数是否足够
+	if _throw_target_unit != null:
+		# 投掷单位消耗1点行动点
+		if _selected_unit.remaining_move_points < 1:
+			print("[TacticsBoard] 投掷单位需要1点行动点数，当前只有 %d" % _selected_unit.remaining_move_points)
+			_cancel_throw_mode()
+			return
+	else:
+		# 投掷地形消耗2点行动点
+		if _selected_unit.remaining_move_points < 2:
+			print("[TacticsBoard] 投掷地形需要2点行动点数，当前只有 %d" % _selected_unit.remaining_move_points)
+			_cancel_throw_mode()
+			return
+
+	# 进入方向选择模式
+	_combat_state = CombatState.THROW_DIRECTION_MODE
+	_show_throw_direction_range(target_pos)
+
+
+## 显示投掷方向选择范围（以目标为中心的26格可选方向）
+func _show_throw_direction_range(target_pos: Vector3i) -> void:
+	_clear_move_range()
+
+	var center_col := target_pos.x
+	var center_row := target_pos.y
+	var center_layer := target_pos.z
+
+	# 26个方向偏移（使用PhysicsSystem的DIRECTION_OFFSETS_3D）
+	for offset in PhysicsSystem.DIRECTION_OFFSETS_3D:
+		var dc := offset.x
+		var dr := offset.y
+		var dl := offset.z
+
+		var tc := center_col + dc
+		var tr := center_row + dr
+		var tl := center_layer + dl
+
+		# 创建白色线框立方体表示可选方向
+		_create_throw_direction_wireframe(tc, tr, tl, offset)
+		_move_range.append(offset)  # 存储方向偏移量
+
+	_highlight_type = "throw_direction"
+
+
+## 创建投掷方向线框立方体（白色）
+func _create_throw_direction_wireframe(col: int, row: int, layer: int, direction: Vector3i) -> void:
+	_create_wireframe_cube(col, row, layer, "ThrowDir", Color(1.0, 1.0, 1.0, 0.85))
+
+
+## 获取鼠标点击的投掷方向（数学方法计算射线与方向格子相交）
+func _get_throw_direction_3d(screen_pos: Vector2) -> Vector3i:
+	if subviewport_container == null or camera == null:
+		return Vector3i(-1, -1, -1)
+
+	var svp := subviewport_container.get_node_or_null("SubViewport") as SubViewport
+	if svp == null:
+		return Vector3i(-1, -1, -1)
+
+	var viewport_rect := subviewport_container.get_global_rect()
+	var local_pos := screen_pos - viewport_rect.position
+	var container_size := viewport_rect.size
+
+	if local_pos.x < 0 or local_pos.y < 0 or local_pos.x > container_size.x or local_pos.y > container_size.y:
+		return Vector3i(-1, -1, -1)
+
+	var viewport_pos := Vector2(
+		local_pos.x / container_size.x * svp.size.x,
+		local_pos.y / container_size.y * svp.size.y
+	)
+
+	# 计算射线，转换到 tile_container 本地空间
+	var from := camera.project_ray_origin(viewport_pos)
+	var inv_transform := tile_container.global_transform.affine_inverse()
+	var local_origin := inv_transform * from
+	var local_ray := inv_transform.basis * camera.project_ray_normal(viewport_pos)
+
+	# 对每个方向偏移，计算对应格子的 AABB 并测试相交
+	var best_t: float = INF
+	var best_dir := Vector3i(-1, -1, -1)
+	var half := TILE_SIZE * 0.45
+
+	for offset in _move_range:
+		if not (offset is Vector3i):
+			continue
+		var d := offset as Vector3i
+		# 方向格子位置 = 目标位置 + 方向偏移
+		var tc := _throw_target_pos.x + d.x
+		var tr := _throw_target_pos.y + d.y
+		var tl := _throw_target_pos.z + d.z
+
+		var aabb_center := Vector3(
+			(tc - (_grid_cols - 1) * 0.5) * TILE_SIZE,
+			TILE_SIZE * (float(tl) + 0.5),
+			(tr - (_grid_rows - 1) * 0.5) * TILE_SIZE
+		)
+		var t := _ray_aabb_intersect(local_origin, local_ray, aabb_center, Vector3(half, half, half))
+		if t > 0 and t < best_t:
+			best_t = t
+			best_dir = d
+
+	return best_dir
+
+
+## 应用投掷方向（执行物理效果）
+func _apply_throw_direction(direction: Vector3i) -> void:
+	_clear_move_range()
+
+	# 投掷动作参数（硬编码）
+	const THROW_IMPULSE: float = 1.5
+
+	if _throw_target_unit != null:
+		# 目标有单位：投掷该单位，消耗1点行动点
+		_physics_system.apply_velocity_direction_3d(
+			_throw_target_unit,
+			_throw_target_pos,
+			direction,
+			THROW_IMPULSE
+		)
+		_selected_unit.remaining_move_points -= 1
+		print("[TacticsBoard] 投掷单位 %s，消耗1点行动点" % _throw_target_unit.unit_id)
+	else:
+		# 目标为地形方块：消耗2点行动点
+		print("[TacticsBoard] 投掷地形方块 (%d,%d,%d)，消耗2点行动点" % [
+			_throw_target_pos.x, _throw_target_pos.y, _throw_target_pos.z
+		])
+		_selected_unit.remaining_move_points -= 2
+
+	# 投掷完成后，重置状态
+	_throw_target_pos = Vector3i(-1, -1, -1)
+	_throw_target_unit = null
+
+	# 如果还有移动点数且未行动，重新显示菜单
+	if _selected_unit.remaining_move_points > 0 or not _selected_unit.has_acted:
+		_combat_state = CombatState.UNIT_SELECTED
+		_show_action_menu(_selected_unit)
+	else:
+		_end_current_unit_turn()
+
+
+## 取消投掷目标选择模式
+func _cancel_throw_mode() -> void:
+	_clear_move_range()
+	_pending_skill_id = ""
+	_throw_target_pos = Vector3i(-1, -1, -1)
+	_throw_target_unit = null
+	_combat_state = CombatState.UNIT_SELECTED
+	_show_action_menu(_selected_unit)
+
+
+## 取消投掷方向选择模式
+func _cancel_throw_direction_mode() -> void:
+	_clear_move_range()
+	# 回到目标选择模式（允许重新选择目标）
+	_combat_state = CombatState.THROW_TARGET_MODE
+	_show_throw_target_range(_selected_unit)
+
+
+## 统一悬停高亮（鼠标移动时调用）
+## 所有模式统一使用AABB数学方法检测悬停的线框
+func _update_hover_highlight(screen_pos: Vector2) -> void:
+	if subviewport_container == null or camera == null:
+		return
+
+	var svp := subviewport_container.get_node_or_null("SubViewport") as SubViewport
+	if svp == null:
+		return
+
+	var viewport_rect := subviewport_container.get_global_rect()
+	var local_pos := screen_pos - viewport_rect.position
+	var container_size := viewport_rect.size
+
+	if local_pos.x < 0 or local_pos.y < 0 or local_pos.x > container_size.x or local_pos.y > container_size.y:
+		_restore_all_wireframes_to_white()
+		return
+
+	var viewport_pos := Vector2(
+		local_pos.x / container_size.x * svp.size.x,
+		local_pos.y / container_size.y * svp.size.y
+	)
+
+	# 统一使用AABB数学方法检测悬停的线框
+	# 所有模式的线框名称都包含绝对网格坐标：prefix_col_row_layer
+	var from := camera.project_ray_origin(viewport_pos)
+	var inv_transform := tile_container.global_transform.affine_inverse()
+	var local_origin := inv_transform * from
+	var local_ray := inv_transform.basis * camera.project_ray_normal(viewport_pos)
+	var half := TILE_SIZE * 0.45
+
+	var best_t: float = INF
+	var hovered_idx: int = -1
+
+	for i in range(_move_range_cubes.size()):
+		var cube_root: Node = _move_range_cubes[i]
+		if not (cube_root is Node3D):
+			continue
+		var name_str: String = cube_root.name
+		var parts := name_str.split("_")
+		if parts.size() >= 4:
+			# 线框名称格式: "前缀_col_row_layer"（都是绝对网格坐标）
+			var col := parts[1].to_int()
+			var row := parts[2].to_int()
+			var layer := parts[3].to_int()
+			var aabb_center := Vector3(
+				(col - (_grid_cols - 1) * 0.5) * TILE_SIZE,
+				TILE_SIZE * (float(layer) + 0.5),
+				(row - (_grid_rows - 1) * 0.5) * TILE_SIZE
+			)
+			var t := _ray_aabb_intersect(local_origin, local_ray, aabb_center, Vector3(half, half, half))
+			if t > 0 and t < best_t:
+				best_t = t
+				hovered_idx = i
+
+	# 更新高亮
+	if hovered_idx != _hovered_wireframe_idx:
+		if _hovered_wireframe_idx >= 0 and _hovered_wireframe_idx < _move_range_cubes.size():
+			_set_wireframe_color(_hovered_wireframe_idx, Color(1.0, 1.0, 1.0, 0.85))
+		if hovered_idx >= 0 and hovered_idx < _move_range_cubes.size():
+			_set_wireframe_color(hovered_idx, Color(1.0, 0.8, 0.2, 0.85))
+		_hovered_wireframe_idx = hovered_idx
+
+
+## 设置线框颜色
+func _set_wireframe_color(idx: int, color: Color) -> void:
+	if idx < 0 or idx >= _move_range_cubes.size():
+		return
+
+	var wireframe_root: Node = _move_range_cubes[idx]
+	if wireframe_root is Node3D:
+		# 遍历所有子节点，找到 MeshInstance3D 并修改颜色
+		for child in wireframe_root.get_children():
+			if child is MeshInstance3D:
+				var mat: StandardMaterial3D = child.material_override as StandardMaterial3D
+				if mat != null:
+					mat.albedo_color = color
+
+
+## 恢复所有线框为白色
+func _restore_all_wireframes_to_white() -> void:
+	for i in range(_move_range_cubes.size()):
+		_set_wireframe_color(i, Color(1.0, 1.0, 1.0, 0.85))
+	_hovered_wireframe_idx = -1

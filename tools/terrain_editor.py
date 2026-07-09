@@ -111,6 +111,7 @@ class TerrainMap:
 
         self._load_terrain_types()
         self._load_battle_config()
+        self._ensure_terrain_types()
 
     def _load_terrain_types(self):
         if not os.path.exists(self.terrain_types_dir):
@@ -132,16 +133,51 @@ class TerrainMap:
         self.terrain_type_names.append("__DELETE__")
         print(f"  共加载 {len(self.terrain_types)} 个地形类型")
 
+    def _ensure_terrain_types(self):
+        """确保地形数据中引用的所有类型都有对应的配置，自动补充缺失类型"""
+        all_types = set()
+        for layers in self.tiles.values():
+            for t in layers:
+                if t is not None and t != "__AIR__":
+                    all_types.add(t)
+        if self.default_type:
+            all_types.add(self.default_type)
+
+        new_count = 0
+        for type_id in sorted(all_types):
+            if type_id not in self.terrain_types:
+                config = {
+                    "terrain_type_id": type_id,
+                    "display_name": type_id,
+                    "material_type": "STONE",
+                    "mass": 100.0,
+                    "has_health": True,
+                    "is_passable": True,
+                }
+                tt = TerrainTypeConfig(config)
+                self.terrain_types[type_id] = tt
+                if "__DELETE__" in self.terrain_type_names:
+                    idx = self.terrain_type_names.index("__DELETE__")
+                    self.terrain_type_names.insert(idx, type_id)
+                else:
+                    self.terrain_type_names.append(type_id)
+                new_count += 1
+        if new_count > 0:
+            print(f"  自动补充 {new_count} 个未配置的地形类型")
+
     def _load_battle_config(self):
-        # 从 battle_XXX.json 读取网格尺寸
+        # 从 battle_XXX.json 读取网格尺寸和初始地形类型
         if os.path.exists(self.battle_config_path):
             try:
                 with open(self.battle_config_path, 'r', encoding='utf-8') as f:
                     config = json.load(f)
                 self.grid_cols = config.get("grid_cols", 10)
                 self.grid_rows = config.get("grid_rows", 10)
-                # 读取初始地块类型（战斗配置中的可选项）
-                self.default_type = config.get("initial_terrain_type", self.default_type)
+                # 读取初始地形类型
+                initial_type = config.get("initial_terrain_type", "")
+                if initial_type:
+                    self.default_type = initial_type
+                    print(f"  初始地形类型: {self.default_type}")
             except Exception as e:
                 print(f"[ERROR] 加载战斗配置: {e}")
         else:
@@ -170,7 +206,14 @@ class TerrainMap:
                 col, row = tile.get("col", 0), tile.get("row", 0)
                 # 新格式: layers 列表
                 if "layers" in tile:
-                    self.tiles[(col, row)] = list(tile["layers"])
+                    # 将null/None转换为"__AIR__"标记
+                    loaded_layers = []
+                    for l in tile["layers"]:
+                        if l is None:
+                            loaded_layers.append("__AIR__")
+                        else:
+                            loaded_layers.append(l)
+                    self.tiles[(col, row)] = loaded_layers
                 # 旧格式: type_id + height -> 转换
                 else:
                     type_id = tile.get("type_id", tile.get("type", self.default_type))
@@ -187,19 +230,42 @@ class TerrainMap:
         return self.tiles.get((col, row), [])
 
     def get_column_height(self, col, row):
-        """获取(col, row)的总高度（层数，不含None占位）"""
+        """获取(col, row)的总高度（层数）"""
         layers = self.get_layers(col, row)
         if layers is None:
             return -1
-        return sum(1 for t in layers if t is not None)
+        return len(layers)
 
     def place_on_top(self, col, row, type_id):
-        """在(col, row)顶部放置地块"""
-        if (col, row) in self.excluded_tiles:
+        """在(col, row)放置地块：优先填入空气层，否则追加到顶部"""
+        if (col, row) in self.excluded_tiles and type_id != "__DELETE__":
             self.excluded_tiles.discard((col, row))
-        if (col, row) not in self.tiles:
-            self.tiles[(col, row)] = []
-        self.tiles[(col, row)].append(type_id)
+        if type_id == "__DELETE__":
+            # 删除顶部非空气层
+            if (col, row) in self.tiles and self.tiles[(col, row)]:
+                layers = self.tiles[(col, row)]
+                while layers and layers[-1] == "__AIR__":
+                    layers.pop()
+                if layers:
+                    layers.pop()
+                if not layers:
+                    del self.tiles[(col, row)]
+            else:
+                self.excluded_tiles.add((col, row))
+        else:
+            if (col, row) not in self.tiles:
+                self.tiles[(col, row)] = []
+            layers = self.tiles[(col, row)]
+            # 优先填入第一个空气层（如拱门下方的空隙）
+            air_idx = -1
+            for i, l in enumerate(layers):
+                if l == "__AIR__":
+                    air_idx = i
+                    break
+            if air_idx >= 0:
+                layers[air_idx] = type_id
+            else:
+                layers.append(type_id)
 
     def place_at_face(self, col, row, layer, face, type_id):
         """根据面方向放置地块
@@ -227,33 +293,33 @@ class TerrainMap:
         if nc < 0 or nc >= self.grid_cols or nr < 0 or nr >= self.grid_rows:
             return None
 
-        if type_id == "__DELETE__":
-            # 删除指定层的地块
-            self.delete_layer(nc, nr, nl)
-            return (nc, nr, nl)
-
         # 确保列存在
         if (nc, nr) not in self.tiles:
             self.tiles[(nc, nr)] = []
         layers = self.tiles[(nc, nr)]
 
-        # 面放置：只放一个方块，不补齐整列
-        # 用 None 占位到目标层（渲染时跳过 None 层）
-        while len(layers) <= nl:
-            layers.append(None)
+        # 如果目标层超出当前高度，用__AIR__补齐（空气层，不渲染）
+        while len(layers) < nl:
+            layers.append("__AIR__")
 
         # 放置
-        layers[nl] = type_id
+        if nl < len(layers):
+            layers[nl] = type_id
+        else:
+            layers.append(type_id)
 
         self.excluded_tiles.discard((nc, nr))
         return (nc, nr, nl)
 
     def delete_layer(self, col, row, layer):
-        """删除指定层"""
+        """删除指定层，用__AIR__替换以保持层结构，并清理尾部空气层"""
         if (col, row) in self.tiles:
             layers = self.tiles[(col, row)]
             if layer < len(layers):
-                layers.pop(layer)
+                layers[layer] = "__AIR__"
+                # 清理尾部空气层
+                while layers and layers[-1] == "__AIR__":
+                    layers.pop()
                 if not layers:
                     del self.tiles[(col, row)]
 
@@ -265,9 +331,9 @@ class TerrainMap:
         if (col, row) not in self.tiles:
             self.tiles[(col, row)] = []
         layers = self.tiles[(col, row)]
-        # 补齐到目标层
+        # 补齐到目标层（用__AIR__填充空气层）
         while len(layers) <= layer:
-            layers.append(self.default_type)
+            layers.append("__AIR__")
         layers[layer] = type_id
 
     def save_to_json(self):
@@ -285,14 +351,13 @@ class TerrainMap:
 
             tiles_list = []
             for (col, row), layers in sorted(self.tiles.items()):
-                # 过滤掉None占位，只保存实际地块类型
-                filtered_layers = [t for t in layers if t is not None]
-                if filtered_layers:
+                # 只保存有实际方块的列（跳过全空气列）
+                if layers and any(l != "__AIR__" for l in layers):
                     tiles_list.append({
                         "col": col,
                         "row": row,
-                        "layers": filtered_layers,
-                        "height": len(filtered_layers)
+                        "layers": layers,
+                        "height": len(layers)
                     })
 
             terrain_config = {
@@ -470,16 +535,14 @@ class TerrainRenderer:
     def _render_all_tiles(self):
         hc = self.map.grid_cols / 2.0
         hr = self.map.grid_rows / 2.0
-        rendered_positions = set()
         for (col, row), layers in self.map.tiles.items():
-            rendered_positions.add((col, row))
             if not layers:
                 continue
             x = (col - hc) * self.tile_size
             z = (row - hr) * self.tile_size
             for layer_idx, type_id in enumerate(layers):
-                if type_id is None:
-                    continue  # 跳过占位空洞（面放置产生的空层）
+                if type_id == "__AIR__":
+                    continue  # 跳过空气层
                 if type_id in self.map.terrain_types:
                     color = self.map.terrain_types[type_id].color
                 else:
@@ -487,18 +550,6 @@ class TerrainRenderer:
                 y = layer_idx * self.tile_size
                 glColor4f(*color)
                 self._render_cube(x, y, z, self.tile_size)
-
-        # 未配置地块：用默认类型渲染第一层（layer 0）
-        if self.map.default_type and self.map.default_type in self.map.terrain_types:
-            default_color = self.map.terrain_types[self.map.default_type].color
-            for col in range(self.map.grid_cols):
-                for row in range(self.map.grid_rows):
-                    if (col, row) in rendered_positions or (col, row) in self.map.excluded_tiles:
-                        continue
-                    x = (col - hc) * self.tile_size
-                    z = (row - hr) * self.tile_size
-                    glColor4f(*default_color)
-                    self._render_cube(x, 0, z, self.tile_size)
 
     def _render_cube(self, x, y, z, size):
         hs = size / 2.0
@@ -818,7 +869,7 @@ class TerrainEditorUI:
             MODE_EDIT: "左键修改已有地块类型 | 右键滑动批量修改",
             MODE_MOVE: "左键拖动平移视角",
         }
-        hint = f"模式:{mode_hint} | {hints[self.current_mode]} | 中键旋转 | 滚轮缩放 | Q/E旋转 | S保存 | ESC退出"
+        hint = f"模式:{mode_hint} | {hints[self.current_mode]} | 中键旋转 | 滚轮缩放 | WASD平移 | Shift/Ctrl升降 | Q/E旋转 | S保存 | ESC退出"
         hint_surf = self.font_small.render(hint, True, (150, 150, 160))
         ui_surface.blit(hint_surf, (10, self.panel_y + self.PANEL_HEIGHT - 14))
 
@@ -933,6 +984,7 @@ class TerrainEditor:
         clock = pygame.time.Clock()
         while self.running:
             self._handle_events()
+            self._handle_continuous_keys()
             self._render_frame()
             pygame.display.flip()
             clock.tick(60)
@@ -952,6 +1004,37 @@ class TerrainEditor:
                 self._on_mouse_move(event)
             elif event.type == MOUSEWHEEL:
                 self.renderer.zoom(event.y)
+
+    def _handle_continuous_keys(self):
+        """处理WASD持续按键移动和Shift/Ctrl上下移动"""
+        keys = pygame.key.get_pressed()
+        rad_yaw = math.radians(self.renderer.camera_angle_y)
+        speed = self.renderer.camera_distance * 0.015
+
+        # WASD：基于相机朝向的水平平移
+        forward_x = -math.cos(rad_yaw)
+        forward_z = -math.sin(rad_yaw)
+        right_x = math.sin(rad_yaw)
+        right_z = -math.cos(rad_yaw)
+
+        if keys[K_w]:
+            self.renderer.camera_target[0] += forward_x * speed
+            self.renderer.camera_target[2] += forward_z * speed
+        if keys[K_s]:
+            self.renderer.camera_target[0] -= forward_x * speed
+            self.renderer.camera_target[2] -= forward_z * speed
+        if keys[K_a]:
+            self.renderer.camera_target[0] -= right_x * speed
+            self.renderer.camera_target[2] -= right_z * speed
+        if keys[K_d]:
+            self.renderer.camera_target[0] += right_x * speed
+            self.renderer.camera_target[2] += right_z * speed
+
+        # Shift上升 / Ctrl下降
+        if keys[K_LSHIFT] or keys[K_RSHIFT]:
+            self.renderer.camera_target[1] += speed
+        if keys[K_LCTRL] or keys[K_RCTRL]:
+            self.renderer.camera_target[1] -= speed
 
     def _on_key(self, event):
         if event.key == K_ESCAPE:
@@ -989,28 +1072,31 @@ class TerrainEditor:
                 col, row, layer, face = self.renderer.pick_tile_3d(mx, my, self.screen_width, self.screen_height)
                 if col >= 0 and row >= 0:
                     if self.ui.selected_type_id == "__DELETE__":
-                        # 删除指定层（点击到的方块）
+                        self.map.delete_layer(col, row, layer)
+                    else:
+                        self.map.place_on_top(col, row, self.ui.selected_type_id)
+                    layers = self.map.get_layers(col, row)
+                    self.renderer.selected_col = col
+                    self.renderer.selected_row = row
+                    self.renderer.selected_layer = len(layers) - 1 if layers else 0
+            elif mode == MODE_FACE_PLACE:
+                col, row, layer, face = self.renderer.pick_tile_3d(mx, my, self.screen_width, self.screen_height)
+                if col >= 0 and row >= 0:
+                    if self.ui.selected_type_id == "__DELETE__":
+                        # 删除模式：删除点击的具体方块
                         self.map.delete_layer(col, row, layer)
                         self.renderer.selected_col = col
                         self.renderer.selected_row = row
-                        self.renderer.selected_layer = max(0, layer - 1)
-                    else:
-                        self.map.place_on_top(col, row, self.ui.selected_type_id)
-                        layers = self.map.get_layers(col, row)
-                        self.renderer.selected_col = col
-                        self.renderer.selected_row = row
-                        self.renderer.selected_layer = len(layers) - 1 if layers else 0
-            elif mode == MODE_FACE_PLACE:
-                col, row, layer, face = self.renderer.pick_tile_3d(mx, my, self.screen_width, self.screen_height)
-                if col >= 0 and row >= 0 and face is not None:
-                    target = self.renderer.get_face_placement_target(col, row, layer, face)
-                    if target:
-                        nc, nr, nl = target
-                        if 0 <= nc < self.map.grid_cols and 0 <= nr < self.map.grid_rows:
-                            self.map.place_at_face(col, row, layer, face, self.ui.selected_type_id)
-                            self.renderer.selected_col = nc
-                            self.renderer.selected_row = nr
-                            self.renderer.selected_layer = nl
+                        self.renderer.selected_layer = layer
+                    elif face is not None:
+                        target = self.renderer.get_face_placement_target(col, row, layer, face)
+                        if target:
+                            nc, nr, nl = target
+                            if 0 <= nc < self.map.grid_cols and 0 <= nr < self.map.grid_rows:
+                                self.map.place_at_face(col, row, layer, face, self.ui.selected_type_id)
+                                self.renderer.selected_col = nc
+                                self.renderer.selected_row = nr
+                                self.renderer.selected_layer = nl
                 # 清除预览
                 self.renderer.preview_col = -1
 
@@ -1040,11 +1126,13 @@ class TerrainEditor:
         if col < 0 or row < 0:
             return
 
+        # 删除模式：删除点击的具体方块
+        if self.ui.selected_type_id == "__DELETE__":
+            self.map.delete_layer(col, row, layer)
+            return
+
         if mode == MODE_PLACE:
-            if self.ui.selected_type_id == "__DELETE__":
-                self.map.delete_layer(col, row, layer)
-            else:
-                self.map.place_on_top(col, row, self.ui.selected_type_id)
+            self.map.place_on_top(col, row, self.ui.selected_type_id)
         elif mode == MODE_FACE_PLACE:
             if face is not None:
                 self.map.place_at_face(col, row, layer, face, self.ui.selected_type_id)
@@ -1152,6 +1240,8 @@ def main():
     print("    右键拖动    : 批量操作(当前模式)")
     print("    中键拖动    : 旋转视角")
     print("    滚轮        : 缩放")
+    print("    WASD        : 视角平移(相对朝向)")
+    print("    Shift/Ctrl  : 视角上升/下降")
     print("    Q/E         : 旋转视角")
     print("    1/2/3/4     : 切换模式")
     print("    S           : 保存")

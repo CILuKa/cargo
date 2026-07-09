@@ -46,6 +46,22 @@ const DIRECTION_OFFSETS: Array[Vector2i] = [
 	Vector2i(-1, 0),  Vector2i(-1, -1)   # 西, 西北
 ]
 
+## 26个方向偏移（3D立体，grid坐标 + 高度层），用于投掷技能
+## (col偏移, row偏移, 高度层偏移)，排除中心(0,0,0)
+const DIRECTION_OFFSETS_3D: Array[Vector3i] = [
+	# 同层（水平8方向）
+	Vector3i(0, -1, 0),  Vector3i(1, -1, 0), Vector3i(1, 0, 0), Vector3i(1, 1, 0),
+	Vector3i(0, 1, 0),  Vector3i(-1, 1, 0), Vector3i(-1, 0, 0), Vector3i(-1, -1, 0),
+	# 上层（8方向 + 纯向上）
+	Vector3i(0, -1, 1), Vector3i(1, -1, 1), Vector3i(1, 0, 1), Vector3i(1, 1, 1),
+	Vector3i(0, 1, 1),  Vector3i(-1, 1, 1), Vector3i(-1, 0, 1), Vector3i(-1, -1, 1),
+	Vector3i(0, 0, 1),  # 纯向上
+	# 下层（8方向 + 纯向下）
+	Vector3i(0, -1, -1), Vector3i(1, -1, -1), Vector3i(1, 0, -1), Vector3i(1, 1, -1),
+	Vector3i(0, 1, -1),  Vector3i(-1, 1, -1), Vector3i(-1, 0, -1), Vector3i(-1, -1, -1),
+	Vector3i(0, 0, -1),  # 纯向下
+]
+
 
 # =============================================================================
 # BoardContext — 棋盘数据接口（解耦对 TacticsBoard 的直接依赖）
@@ -159,7 +175,8 @@ func _init(ctx: BoardContext) -> void:
 # 矢量速度结算 — 回合结束时调用
 # =============================================================================
 
-## 结算单位的矢量速度：重力加速度 → 空中高度更新 → 8方向匹配 → 逐格滑动 → 碰撞检测 → 衰减
+## 结算单位的矢量速度：重力加速度 → 空中高度更新 → 8方向匹配 → 逐格滑动 → 碰撞检测 → 摩擦衰减 → 落地检查
+## 离散物理模型：速度跨回合保持，滑动不消耗速度，仅摩擦力和碰撞改变速度
 ## 这是每个回合结束时对单个单位执行的完整物理管线
 func settle_velocity(unit: TacticsUnit) -> void:
 	# ---- 阶段0：检查是否真正在空中 ----
@@ -171,13 +188,13 @@ func settle_velocity(unit: TacticsUnit) -> void:
 	if unit.physics.is_airborne:
 		# 物理正确的顺序：先应用重力加速度，再用新速度更新位置（半隐式欧拉积分）
 		# 这确保本回合的重力增量立即体现在位置变化中
-		# 1. 应用重力加速度（velocity.y += GRAVITY_CONSTANT）
+		# 1. 应用重力加速度（vertical_velocity += GRAVITY_CONSTANT，不影响水平速度）
 		unit.physics.apply_gravity_acceleration()
-		_log("重力加速度(先于位移): unit=%s velocity.y=%.2f air_height=%.2f" % [
-			unit.unit_id, unit.physics.velocity.y, unit.physics.air_height
+		_log("重力加速度(先于位移): unit=%s vertical_velocity=%.2f air_height=%.2f" % [
+			unit.unit_id, unit.physics.vertical_velocity, unit.physics.air_height
 		])
 
-		# 2. 用更新后的velocity.y更新空中高度
+		# 2. 用更新后的vertical_velocity更新空中高度
 		#    注意：_update_air_height 可能将 is_airborne 设为 false（air_height 归零时）
 		_update_air_height(unit)
 
@@ -196,11 +213,8 @@ func settle_velocity(unit: TacticsUnit) -> void:
 		return
 
 	# ---- 阶段2：方向匹配 ----
-	# 自由落体中的单位（fall_height > 0）的 velocity.y 由重力产生，只影响 air_height，
-	# 不应参与水平网格滑动。排除 y 分量后再做方向匹配。
+	# velocity 是纯水平速度（x=col方向, y=row方向），不包含垂直分量
 	var slide_vel: Vector2 = unit.physics.velocity
-	if unit.physics.is_airborne and unit.physics.fall_height > 0.0:
-		slide_vel.y = 0.0
 
 	if slide_vel.length() < 0.01:
 		# 无有效水平速度，检查落地状态
@@ -211,10 +225,14 @@ func settle_velocity(unit: TacticsUnit) -> void:
 	var best_dir := _find_best_slide_direction(v_dir)
 
 	# ---- 阶段3：滑动距离计算 ----
-	var tile_count: int = floori(slide_vel.length())
+	# 8方向系统中，对角1格 = 水平1格（都是1步移动）
+	# 因此滑动格数 = 速度在匹配方向上的投影长度（取整）
+	# 而非速度的欧几里得长度（对角线会多出sqrt(2)倍）
+	var projected_length: float = absf(slide_vel.dot(best_dir.normalized()))
+	var tile_count: int = floori(projected_length)
 	if tile_count <= 0:
 		# 幅度太小（< 1格），不滑动，直接衰减
-		_apply_velocity_decay(unit, v_dir, slide_vel.length())
+		_apply_velocity_decay(unit, v_dir, projected_length)
 		_check_landing(unit)
 		return
 
@@ -292,11 +310,11 @@ func settle_velocity(unit: TacticsUnit) -> void:
 			_log("坠落: unit=%s 下落=%d格 进入自由落体 air_height=%.2f" % [
 				unit.unit_id, drop, unit.physics.air_height
 			])
-			# 停止滑动：已经滑动了 i+1 步，衰减剩余速度后退出
-			var steps_taken: int = i + 1
-			var remaining_mag: float = maxf(0.0, mag - float(steps_taken))
-			unit.physics.velocity = v_dir * remaining_mag
-			_log("坠落中断滑动: unit=%s 已滑动=%d步 剩余幅度=%.2f" % [unit.unit_id, steps_taken, remaining_mag])
+			# 进入自由落体：速度保持不变（滑动不消耗速度，空中无摩擦）
+			# 速度将在后续回合中完整保留，直到落地后才有地面摩擦减速
+			_log("坠落中断滑动: unit=%s 速度保持=(%.2f, %.2f)" % [
+				unit.unit_id, unit.physics.velocity.x, unit.physics.velocity.y
+			])
 			return
 
 		# 4d. 移动单位到新格子（考虑空中高度）
@@ -305,12 +323,15 @@ func settle_velocity(unit: TacticsUnit) -> void:
 		unit.position = _ctx.grid_to_world_top(next_pos.x, next_pos.y, unit.physics.air_height)
 		_ctx.update_unit_data(unit.unit_id, next_pos.x, next_pos.y)
 
-	# ---- 阶段5：滑动完成 ----
-	# 检查落地状态并清除垂直速度和空中高度（延迟坠落伤害由 _check_landing 内部处理）
-	_check_landing(unit)
+	# ---- 阶段5：速度衰减 ----
+	# 先衰减再检查落地，确保衰减时使用正确的空中/地面状态
+	# 使用8方向投影长度计算衰减（与滑动距离计算一致）
+	var decay_mag: float = absf(unit.physics.velocity.dot(best_dir.normalized()))
+	_apply_velocity_decay(unit, v_dir, decay_mag)
 
-	# ---- 阶段6：速度衰减 ----
-	_apply_velocity_decay(unit, v_dir, mag)
+	# ---- 阶段6：检查落地状态 ----
+	# 仅当 air_height 自然归零时落地，不会强制空中单位落地
+	_check_landing(unit)
 
 
 # =============================================================================
@@ -334,29 +355,32 @@ func _find_best_slide_direction(v_dir: Vector2) -> Vector2:
 # =============================================================================
 
 ## 更新空中相对高度（实现抛物线运动的上升和下降）
-## 仅在空中时调用，处理velocity.y对air_height的影响
+## 仅在空中时调用，处理vertical_velocity对air_height的影响
 func _update_air_height(unit: TacticsUnit) -> void:
-	# velocity.y < 0：上升阶段（向上跃起）
-	# velocity.y > 0：下降阶段（重力下落）
-	# air_height变化 = -velocity.y（负号：向上为正，向下为负）
+	# vertical_velocity < 0：上升阶段（向上投掷/跃起）
+	# vertical_velocity > 0：下降阶段（重力下落）
+	# air_height变化 = -vertical_velocity（负号：向上为正，向下为负）
 
-	var height_change: float = -unit.physics.velocity.y
+	# vertical_velocity 是唯一的垂直速度来源（重力只影响 vertical_velocity）
+	var vert_vel: float = unit.physics.vertical_velocity
+
+	var height_change: float = -vert_vel
 	unit.physics.air_height += height_change
 
 	# 空中高度不能为负（不能钻入地下）
 	if unit.physics.air_height < 0.0:
 		unit.physics.air_height = 0.0
-		# 如果空中高度降为0且velocity.y > 0（下降），立即落地
-		if unit.physics.velocity.y > 0:
+		# 如果空中高度降为0且正在下降（vert_vel > 0），立即落地
+		if vert_vel > 0:
 			_log("空中高度归零（下降阶段）: unit=%s 强制落地" % unit.unit_id)
 			# 如果有待结算的坠落高度，先计算伤害
 			if unit.physics.fall_height > 0.0:
 				_apply_deferred_fall_damage(unit)
 			unit.physics.is_airborne = false
-			unit.physics.velocity.y = 0.0
+			unit.physics.vertical_velocity = 0.0
 
-	_log("空中高度更新: unit=%s height_change=%.2f air_height=%.2f velocity.y=%.2f" % [
-		unit.unit_id, height_change, unit.physics.air_height, unit.physics.velocity.y
+	_log("空中高度更新: unit=%s height_change=%.2f air_height=%.2f vertical_velocity=%.2f" % [
+		unit.unit_id, height_change, unit.physics.air_height, unit.physics.vertical_velocity
 	])
 
 
@@ -378,55 +402,32 @@ func _check_airborne_status(unit: TacticsUnit) -> void:
 	# 如果之前标记为空中（如坠落途中 air_height 刚好归零），清除空中状态
 	if unit.physics.is_airborne:
 		_log("空中状态检测: unit=%s air_height=0 已落地（清除空中标记）" % unit.unit_id)
-		unit.physics.velocity.y = 0.0
+		unit.physics.vertical_velocity = 0.0
 		unit.physics.is_airborne = false
 
 
-## 检查落地状态：如果单位在地面上，清除垂直速度和空中标记
+## 检查落地状态：仅当空中高度自然归零时落地（由重力驱动）
+## 不再基于相邻格子高度差来判断是否落地
+## 空中单位通过重力逐回合加速下落，air_height 自然降至 0 时才真正落地
 func _check_landing(unit: TacticsUnit) -> void:
 	if not unit.physics.is_airborne:
 		return
 
-	# 检查空中高度是否降为0（自由落体落地）
+	# 只有空中高度自然归零时才落地
 	if unit.physics.air_height <= 0.0:
 		unit.physics.air_height = 0.0
 		# 如果有待结算的坠落高度，先计算坠落伤害再清除状态
 		if unit.physics.fall_height > 0.0:
 			_apply_deferred_fall_damage(unit)
-		unit.physics.velocity.y = 0.0
+		unit.physics.vertical_velocity = 0.0
 		unit.physics.is_airborne = false
-		_log("落地（抛物线）: unit=%s air_height=0 清除垂直速度 velocity.y=0" % unit.unit_id)
+		_log("落地: unit=%s air_height归零 清除垂直速度" % unit.unit_id)
 		return
 
-	# 自由落体中的单位（fall_height > 0）：只能通过 air_height 归零落地
-	# 不检查下方格子支撑，因为它们已经站在目标格子上，只是还在空中高度
-	if unit.physics.fall_height > 0.0:
-		_log("仍在自由落体中: unit=%s air_height=%.2f velocity.y=%.2f" % [
-			unit.unit_id, unit.physics.air_height, unit.physics.velocity.y
-		])
-		return
-
-	# 检查当前是否有地面支撑（跃过障碍物时落到高处）
-	var current_height := _ctx.get_tile_height(unit.grid_pos.x, unit.grid_pos.y)
-	var below_pos := Vector2i(unit.grid_pos.x, unit.grid_pos.y + 1)
-	var below_height := current_height
-
-	if _ctx.is_valid_tile(below_pos.x, below_pos.y):
-		below_height = _ctx.get_tile_height(below_pos.x, below_pos.y)
-
-	# 如果当前高度 <= 下方高度，说明已落地
-	if current_height <= below_height:
-		# 落地：如果有待结算的坠落高度，先计算伤害
-		if unit.physics.fall_height > 0.0:
-			_apply_deferred_fall_damage(unit)
-		unit.physics.velocity.y = 0.0
-		unit.physics.air_height = 0.0
-		unit.physics.is_airborne = false
-		_log("落地（下坡）: unit=%s 清除垂直速度和空中高度 velocity.y=0 air_height=0" % unit.unit_id)
-	else:
-		_log("仍在空中: unit=%s 当前高度=%d 下方高度=%d air_height=%.2f" % [
-			unit.unit_id, current_height, below_height, unit.physics.air_height
-		])
+	# 仍在空中，等待重力在后续回合将其拉回地面
+	_log("仍在空中: unit=%s air_height=%.2f vertical_velocity=%.2f" % [
+		unit.unit_id, unit.physics.air_height, unit.physics.vertical_velocity
+	])
 
 
 ## 结算延迟的坠落伤害
@@ -503,27 +504,28 @@ func _handle_fall_collision(unit: TacticsUnit, fall_height: int) -> void:
 # =============================================================================
 
 ## 速度衰减：根据摩擦系数和空中状态减少速度幅度
-## - 空中：无摩擦衰减，仅减去已滑动的格数
-## - 地面：摩擦衰减 = gravity * tile_friction（每格额外消耗）
+## 离散物理模型：滑动本身不消耗速度，只有摩擦力和碰撞改变速度
+## - 空中：无摩擦，速度完整保留到下一回合
+## - 地面：每回合摩擦减速 = gravity * friction（沿8方向向量缩放）
 func _apply_velocity_decay(unit: TacticsUnit, v_dir: Vector2, mag: float) -> void:
 	if unit.physics.is_airborne:
-		# 空中无摩擦，仅减去已滑动的整数部分
-		var tile_count: int = floori(mag)
-		mag = maxf(0.0, mag - float(tile_count))
-		# 自由落体单位（fall_height > 0）的 velocity.y 由重力管理，不应被水平衰减清零
-		var saved_vy: float = unit.physics.velocity.y
-		unit.physics.velocity = v_dir * mag
-		if unit.physics.fall_height > 0.0:
-			unit.physics.velocity.y = saved_vy
-	else:
-		# 地面：摩擦衰减 = 已滑动格数 + 重力系数 * 地块摩擦
-		var friction: float = get_tile_friction(unit.grid_pos.x, unit.grid_pos.y)
-		var tile_count: int = floori(mag)
-		mag = maxf(0.0, mag - float(tile_count) - unit.physics.gravity * friction)
-		unit.physics.velocity = v_dir * mag
+		# 空中无摩擦，速度完整保留到下一回合
+		# 不修改 velocity，让它原样保留，下一回合继续滑动
+		_log("速度衰减后(空中无摩擦): unit=%s 剩余幅度=%.2f 空中=true" % [
+			unit.unit_id, unit.physics.velocity.length()
+		])
+		return
 
-	_log("速度衰减后: unit=%s 剩余幅度=%.2f 空中=%s" % [
-		unit.unit_id, mag, unit.physics.is_airborne
+	# 地面摩擦减速：每回合减少 gravity * friction 的速度
+	# 物理上，恒定速度的物体在无摩擦面上不会减速，只有摩擦力使其减速
+	# 因此滑动距离不消耗速度，仅摩擦力每回合固定减少速度
+	var friction: float = get_tile_friction(unit.grid_pos.x, unit.grid_pos.y)
+	var friction_decel: float = unit.physics.gravity * friction
+	var new_mag: float = maxf(0.0, mag - friction_decel)
+	unit.physics.velocity = v_dir * new_mag
+
+	_log("速度衰减后(地面摩擦): unit=%s 剩余幅度=%.2f 空中=false 摩擦减速=%.2f" % [
+		unit.unit_id, new_mag, friction_decel
 	])
 
 
@@ -736,6 +738,53 @@ func apply_velocity_direction(target: TacticsUnit, center: Vector2i, col: int, r
 				_log("推击(apply_momentum): 目标=%s 方向=%s 冲量=%.1f 质量=%.1f 新速度=%s" % [
 					target.unit_id, velocity_dir, impulse, target.physics.mass, target.physics.velocity
 				])
+
+
+## 应用投掷技能的3D方向（由方向选择UI触发）
+## 26个方向（立体），分解到水平和垂直分量
+##
+## 重要：不使用归一化，每个方向分量独立计算冲量
+## 这确保了相同冲量下，水平分量和垂直分量与方向偏移量成正比
+## 例如：(1,0,0)→水平1.5格，(1,1,0)→水平(1.5,1.5)即对角1.5格，(0,0,1)→垂直1.5格
+##
+## @param target: 被投掷的目标单位
+## @param center: 目标当前所在格子 + 高度层 (col, row, layer)
+## @param direction_3d: 玩家选择的3D方向偏移 (dx, dy, dz)
+## @param impulse: 冲量值（每格的速度增量）
+func apply_velocity_direction_3d(target: TacticsUnit, center: Vector3i, direction_3d: Vector3i, impulse: float) -> void:
+	# 不归一化！每个方向分量独立施加冲量
+	# 水平速度增量 = (direction_3d.x * impulse, direction_3d.y * impulse) / mass
+	# 垂直速度增量 = -direction_3d.z * impulse / mass（负号：向上投掷时 vertical_velocity < 0）
+	var horizontal_impulse := Vector2(float(direction_3d.x) * impulse, float(direction_3d.y) * impulse)
+	var vertical_impulse := -float(direction_3d.z) * impulse  # 负号：向上投掷时 vertical_velocity < 0
+
+	# 水平速度
+	target.physics.apply_impulse(horizontal_impulse)
+	# 垂直速度
+	if target.physics.mass > 0.0:
+		target.physics.vertical_velocity += vertical_impulse / target.physics.mass
+	else:
+		target.physics.vertical_velocity += vertical_impulse
+
+	# 如果有垂直分量，设置空中状态
+	if direction_3d.z != 0:
+		target.physics.is_airborne = true
+		if direction_3d.z > 0:
+			# 向上投掷：vertical_velocity < 0（向上），air_height 将在 _update_air_height 中增加
+			# 确保有初始离地高度，以便空中状态正确生效
+			if target.physics.air_height <= 0.0:
+				target.physics.air_height = 0.01  # 极小值，仅标记离地，实际上升由 vertical_velocity 驱动
+		elif direction_3d.z < 0:
+			# 向下投掷：vertical_velocity > 0（向下），air_height 将减小
+			if target.physics.air_height <= 0.0:
+				target.physics.air_height = 0.01
+
+	_log("投掷(apply_velocity_direction_3d): 目标=%s 方向=%s 冲量=%.1f 水平速度=%s 垂直速度=%.2f 空中=%s" % [
+		target.unit_id, direction_3d, impulse,
+		target.physics.velocity,
+		target.physics.vertical_velocity,
+		target.physics.is_airborne
+	])
 
 
 ## 将任意方向向量 snaps 到最近的8方向之一

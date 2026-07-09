@@ -1,1248 +1,2337 @@
 {
   "terrain_config": {
-    "default_type": "stone_floor",
-    "excluded_tiles": [
-      {
-        "col": 0,
-        "row": 0
-      },
-      {
-        "col": 0,
-        "row": 5
-      },
-      {
-        "col": 7,
-        "row": 5
-      }
-    ],
-    "tiles": [
-      {
-        "col": 0,
-        "row": 1,
-        "layers": [
+	"default_type": "stone_floor",
+	"excluded_tiles": [
+	  {
+		"col": 0,
+		"row": 0
+	  },
+	  {
+		"col": 0,
+		"row": 5
+	  }
+	],
+	"tiles": [
+	  {
+		"col": 0,
+		"row": 1,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 2,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 2,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 3,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 3,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 4,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 4,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 5,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 5,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 6,
-        "layers": [
-          "stone_floor",
-          "stone_wall",
-          "stone_wall",
-          "stone_wall",
-          "stone_wall",
-          "stone_wall",
-          "stone_wall",
-          "stone_wall",
-          "stone_wall",
-          "stone_wall",
-          "stone_wall",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 6,
+		"layers": [
+		  "stone_floor",
+		  "stone_wall",
+		  "stone_wall",
+		  "stone_wall",
+		  "stone_wall",
+		  "stone_wall",
+		  "stone_wall",
+		  "stone_wall",
+		  "stone_wall",
+		  "stone_wall",
+		  "stone_wall",
           "stone_wall"
-        ],
-        "height": 12
-      },
-      {
-        "col": 0,
-        "row": 7,
-        "layers": [
-          "stone_floor",
-          "stone_wall",
-          "stone_wall",
-          "stone_wall",
-          "stone_wall",
+		],
+		"height": 12
+	  },
+	  {
+		"col": 0,
+		"row": 7,
+		"layers": [
+		  "stone_floor",
+		  "stone_wall",
+		  "stone_wall",
+		  "stone_wall",
+		  "stone_wall",
           "stone_wall"
-        ],
-        "height": 6
-      },
-      {
-        "col": 0,
-        "row": 8,
-        "layers": [
+		],
+		"height": 6
+	  },
+	  {
+		"col": 0,
+		"row": 8,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 9,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 9,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 10,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 10,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 11,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 11,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 12,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 12,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 13,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 13,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 14,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 14,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 15,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 15,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 16,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 16,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 17,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 17,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 18,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 18,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 19,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 19,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 20,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 20,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 21,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 21,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 22,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 22,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 23,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 23,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 24,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 24,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 25,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 25,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 26,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 26,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 27,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 27,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 28,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 28,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 29,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 29,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 0,
-        "row": 30,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 0,
+		"row": 30,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 0,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 0,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 1,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 1,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 2,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 2,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 3,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 3,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 4,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 4,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 5,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 5,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 6,
-        "layers": [
-          "stone_floor",
-          "stone_wall",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 6,
+		"layers": [
+		  "stone_floor",
+		  "stone_wall",
           "stone_wall"
-        ],
-        "height": 3
-      },
-      {
-        "col": 1,
-        "row": 7,
-        "layers": [
-          "stone_floor",
-          "stone_wall",
-          "stone_wall",
+		],
+		"height": 3
+	  },
+	  {
+		"col": 1,
+		"row": 7,
+		"layers": [
+		  "stone_floor",
+		  "stone_wall",
+		  "stone_wall",
           "stone_wall"
-        ],
-        "height": 4
-      },
-      {
-        "col": 1,
-        "row": 8,
-        "layers": [
+		],
+		"height": 4
+	  },
+	  {
+		"col": 1,
+		"row": 8,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 9,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 9,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 10,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 10,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 11,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 11,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 12,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 12,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 13,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 13,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 14,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 14,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 15,
-        "layers": [
-          "stone_floor",
-          "stone_wall",
-          "stone_wall",
-          "stone_wall",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 15,
+		"layers": [
+		  "stone_floor",
+		  "stone_wall",
+		  "stone_wall",
+		  "stone_wall",
           "stone_wall"
-        ],
-        "height": 5
-      },
-      {
-        "col": 1,
-        "row": 16,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 5
+	  },
+	  {
+		"col": 1,
+		"row": 16,
+		"layers": [
+		  "stone_floor",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 1,
-        "row": 17,
-        "layers": [
+		],
+		"height": 2
+	  },
+	  {
+		"col": 1,
+		"row": 17,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 18,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 18,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 19,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 19,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 20,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 20,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 21,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 21,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 22,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 22,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 23,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 23,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 24,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 24,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 25,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 25,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 26,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 26,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 27,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 27,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 28,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 28,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 29,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 29,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 30,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 30,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 1,
-        "row": 31,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 1,
+		"row": 31,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 2,
-        "row": 0,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 2,
+		"row": 0,
+		"layers": [
+		  "stone_floor",
           "stone_floor"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 1,
-        "layers": [
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 1,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 2,
-        "row": 2,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 2,
+		"row": 2,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 2,
-        "row": 3,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 2,
+		"row": 3,
+		"layers": [
+		  "stone_floor",
           "stone_floor"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 4,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 4,
+		"layers": [
+		  "stone_floor",
           "stone_floor"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 5,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 5,
+		"layers": [
+		  "stone_floor",
           "stone_floor"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 6,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 6,
+		"layers": [
+		  "stone_floor",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 7,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 7,
+		"layers": [
+		  "stone_floor",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 8,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 8,
+		"layers": [
+		  "stone_floor",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 9,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 9,
+		"layers": [
+		  "stone_floor",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 10,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 10,
+		"layers": [
+		  "stone_floor",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 11,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 11,
+		"layers": [
+		  "stone_floor",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 12,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 12,
+		"layers": [
+		  "stone_floor",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 13,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 13,
+		"layers": [
+		  "stone_floor",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 14,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 14,
+		"layers": [
+		  "stone_floor",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 15,
-        "layers": [
-          "stone_floor",
-          "stone_wall",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 15,
+		"layers": [
+		  "stone_floor",
+		  "stone_wall",
           "stone_wall"
-        ],
-        "height": 3
-      },
-      {
-        "col": 2,
-        "row": 16,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 3
+	  },
+	  {
+		"col": 2,
+		"row": 16,
+		"layers": [
+		  "stone_floor",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 17,
-        "layers": [
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 17,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 2,
-        "row": 18,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 2,
+		"row": 18,
+		"layers": [
+		  "stone_floor",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 2,
-        "row": 19,
-        "layers": [
+		],
+		"height": 2
+	  },
+	  {
+		"col": 2,
+		"row": 19,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 2,
-        "row": 20,
-        "layers": [
-          "stone_floor",
-          "stone_wall",
-          "stone_wall",
-          "stone_wall",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 2,
+		"row": 20,
+		"layers": [
+		  "stone_floor",
+		  "stone_wall",
+		  "stone_wall",
+		  "stone_wall",
           "stone_wall"
-        ],
-        "height": 5
-      },
-      {
-        "col": 2,
-        "row": 21,
-        "layers": [
+		],
+		"height": 5
+	  },
+	  {
+		"col": 2,
+		"row": 21,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 2,
-        "row": 22,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 2,
+		"row": 22,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 2,
-        "row": 23,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 2,
+		"row": 23,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 2,
-        "row": 24,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 2,
+		"row": 24,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 2,
-        "row": 25,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 2,
+		"row": 25,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 2,
-        "row": 26,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 2,
+		"row": 26,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 0,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 0,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 1,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 1,
+		"layers": [
+		  "stone_floor",
           "stone_floor"
-        ],
-        "height": 2
-      },
-      {
-        "col": 3,
-        "row": 2,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 3,
+		"row": 2,
+		"layers": [
+		  "stone_floor",
           "stone_floor"
-        ],
-        "height": 2
-      },
-      {
-        "col": 3,
-        "row": 3,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 3,
+		"row": 3,
+		"layers": [
+		  "stone_floor",
           "stone_floor"
-        ],
-        "height": 2
-      },
-      {
-        "col": 3,
-        "row": 4,
-        "layers": [
-          "hill",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 3,
+		"row": 4,
+		"layers": [
+		  "hill",
           "hill"
-        ],
-        "height": 2
-      },
-      {
-        "col": 3,
-        "row": 5,
-        "layers": [
-          "hill",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 3,
+		"row": 5,
+		"layers": [
+		  "hill",
           "hill"
-        ],
-        "height": 2
-      },
-      {
-        "col": 3,
-        "row": 6,
-        "layers": [
+		],
+		"height": 2
+	  },
+	  {
+		"col": 3,
+		"row": 6,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 7,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 7,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 8,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 8,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 9,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 9,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 10,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 10,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 11,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 11,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 12,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 12,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 13,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 13,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 14,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 14,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 15,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 15,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 16,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 16,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 17,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 17,
+		"layers": [
+		  "stone_floor",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 3,
-        "row": 18,
-        "layers": [
+		],
+		"height": 2
+	  },
+	  {
+		"col": 3,
+		"row": 18,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 19,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 19,
+		"layers": [
+		  "stone_floor",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 3,
-        "row": 20,
-        "layers": [
+		],
+		"height": 2
+	  },
+	  {
+		"col": 3,
+		"row": 20,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 3,
-        "row": 21,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 3,
+		"row": 21,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 0,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 0,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 4,
-        "layers": [
-          "hill",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 4,
+		"layers": [
+		  "hill",
           "hill"
-        ],
-        "height": 2
-      },
-      {
-        "col": 4,
-        "row": 5,
-        "layers": [
-          "hill",
-          "hill",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 4,
+		"row": 5,
+		"layers": [
+		  "hill",
+		  "hill",
           "hill"
-        ],
-        "height": 3
-      },
-      {
-        "col": 4,
-        "row": 6,
-        "layers": [
+		],
+		"height": 3
+	  },
+	  {
+		"col": 4,
+		"row": 6,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 7,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 7,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 8,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 8,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 9,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 9,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 10,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 10,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 11,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 11,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 12,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 12,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 13,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 13,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 14,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 14,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 15,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 15,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 16,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 16,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 17,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 17,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 18,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 18,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 4,
-        "row": 19,
-        "layers": [
-          "stone_wall",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 4,
+		"row": 19,
+		"layers": [
+		  "stone_wall",
           "stone_wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 5,
-        "row": 0,
-        "layers": [
+		],
+		"height": 2
+	  },
+	  {
+		"col": 5,
+		"row": 0,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 5,
-        "row": 8,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 5,
+		"row": 8,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 5,
-        "row": 9,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 5,
+		"row": 9,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 6,
-        "row": 1,
-        "layers": [
-          "wooden_door_open",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 5,
+		"row": 10,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 5,
+		"row": 11,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 5,
+		"row": 12,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 5,
+		"row": 13,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 5,
+		"row": 14,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 6,
+		"row": 1,
+		"layers": [
+		  "wooden_door_open",
           "wooden_door_open"
-        ],
-        "height": 2
-      },
-      {
-        "col": 6,
-        "row": 6,
-        "layers": [
-          "wall",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 6,
+		"row": 4,
+		"layers": [
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 2
+	  },
+	  {
+		"col": 6,
+		"row": 5,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 6,
+		"row": 6,
+		"layers": [
+		  "wall",
           "wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 6,
-        "row": 7,
-        "layers": [
-          "wall",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 6,
+		"row": 7,
+		"layers": [
+		  "wall",
           "wall"
-        ],
-        "height": 2
-      },
-      {
-        "col": 7,
-        "row": 0,
-        "layers": [
+		],
+		"height": 2
+	  },
+	  {
+		"col": 6,
+		"row": 8,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 7,
-        "row": 1,
-        "layers": [
-          "wooden_door_closed",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 6,
+		"row": 9,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 6,
+		"row": 10,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 6,
+		"row": 11,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 6,
+		"row": 12,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 6,
+		"row": 13,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 6,
+		"row": 14,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 6,
+		"row": 15,
+		"layers": [
+		  "stone_floor",
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 3
+	  },
+	  {
+		"col": 7,
+		"row": 0,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 7,
+		"row": 1,
+		"layers": [
+		  "wooden_door_closed",
           "wooden_door_closed"
-        ],
-        "height": 2
-      },
-      {
-        "col": 8,
-        "row": 1,
-        "layers": [
-          "wooden_door_closed",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 7,
+		"row": 4,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 7,
+		"row": 5,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 7,
+		"row": 6,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 7,
+		"row": 7,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 7,
+		"row": 8,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 7,
+		"row": 9,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 7,
+		"row": 10,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 7,
+		"row": 11,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 7,
+		"row": 12,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 7,
+		"row": 13,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 7,
+		"row": 14,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 7,
+		"row": 16,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 8,
+		"row": 1,
+		"layers": [
+		  "wooden_door_closed",
           "wooden_door_closed"
-        ],
-        "height": 2
-      },
-      {
-        "col": 9,
-        "row": 1,
-        "layers": [
-          "wooden_door_closed",
+		],
+		"height": 2
+	  },
+	  {
+		"col": 8,
+		"row": 4,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 8,
+		"row": 5,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 8,
+		"row": 6,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 8,
+		"row": 7,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 8,
+		"row": 8,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 8,
+		"row": 9,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 8,
+		"row": 10,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 8,
+		"row": 11,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 8,
+		"row": 12,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 8,
+		"row": 13,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 8,
+		"row": 14,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 9,
+		"row": 1,
+		"layers": [
+		  "wooden_door_closed",
           "wooden_door_closed"
-        ],
-        "height": 2
-      },
-      {
-        "col": 10,
-        "row": 1,
-        "layers": [
+		],
+		"height": 2
+	  },
+	  {
+		"col": 9,
+		"row": 4,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 9,
+		"row": 5,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 9,
+		"row": 6,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 9,
+		"row": 7,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 9,
+		"row": 8,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 9,
+		"row": 9,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 9,
+		"row": 10,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 9,
+		"row": 11,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 9,
+		"row": 12,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 9,
+		"row": 13,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 9,
+		"row": 14,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 9,
+		"row": 15,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 9,
+		"row": 17,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 10,
+		"row": 1,
+		"layers": [
           "wooden_door_closed"
-        ],
-        "height": 1
-      },
-      {
-        "col": 29,
-        "row": 33,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 10,
+		"row": 3,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      },
-      {
-        "col": 30,
-        "row": 33,
-        "layers": [
-          "stone_floor",
-          "stone_floor",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 10,
+		"row": 4,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 3
-      },
-      {
-        "col": 30,
-        "row": 34,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 10,
+		"row": 5,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 2
-      },
-      {
-        "col": 31,
-        "row": 33,
-        "layers": [
-          "stone_floor",
+		],
+		"height": 1
+	  },
+	  {
+		"col": 10,
+		"row": 6,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 2
-      },
-      {
-        "col": 31,
-        "row": 34,
-        "layers": [
+		],
+		"height": 1
+	  },
+	  {
+		"col": 10,
+		"row": 7,
+		"layers": [
           "stone_floor"
-        ],
-        "height": 1
-      }
-    ]
+		],
+		"height": 1
+	  },
+	  {
+		"col": 10,
+		"row": 8,
+		"layers": [
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 2
+	  },
+	  {
+		"col": 10,
+		"row": 9,
+		"layers": [
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 2
+	  },
+	  {
+		"col": 10,
+		"row": 10,
+		"layers": [
+		  "stone_floor",
+		  "stone_floor",
+		  "stone_floor",
+		  "stone_floor",
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 10,
+		"row": 11,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 10,
+		"row": 12,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 10,
+		"row": 13,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 10,
+		"row": 14,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 10,
+		"row": 15,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 10,
+		"row": 16,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 11,
+		"row": 3,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 11,
+		"row": 4,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 11,
+		"row": 5,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 11,
+		"row": 6,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 11,
+		"row": 7,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 11,
+		"row": 8,
+		"layers": [
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 2
+	  },
+	  {
+		"col": 11,
+		"row": 9,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 11,
+		"row": 10,
+		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 11,
+		"row": 11,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 11,
+		"row": 12,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 11,
+		"row": 13,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 11,
+		"row": 14,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 11,
+		"row": 15,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 11,
+		"row": 16,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 11,
+		"row": 17,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 12,
+		"row": 4,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 12,
+		"row": 5,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 12,
+		"row": 6,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 12,
+		"row": 7,
+		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 12,
+		"row": 8,
+		"layers": [
+		  "stone_floor",
+		  "stone_floor",
+		  "stone_floor",
+		  "stone_floor",
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 12,
+		"row": 9,
+		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 12,
+		"row": 10,
+		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "stone_floor",
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 12,
+		"row": 11,
+		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 12,
+		"row": 12,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 12,
+		"row": 13,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 12,
+		"row": 14,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 12,
+		"row": 15,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 12,
+		"row": 18,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 13,
+		"row": 4,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 13,
+		"row": 5,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 13,
+		"row": 6,
+		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 7
+	  },
+	  {
+		"col": 13,
+		"row": 7,
+		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 7
+	  },
+	  {
+		"col": 13,
+		"row": 8,
+		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 13,
+		"row": 9,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 13,
+		"row": 10,
+		"layers": [
+		  "stone_floor",
+		  "stone_floor",
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 4
+	  },
+	  {
+		"col": 13,
+		"row": 11,
+		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 13,
+		"row": 12,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 13,
+		"row": 14,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 13,
+		"row": 15,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 13,
+		"row": 16,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 13,
+		"row": 17,
+		"layers": [
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 5
+	  },
+	  {
+		"col": 14,
+		"row": 4,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 14,
+		"row": 7,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 14,
+		"row": 8,
+		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 14,
+		"row": 9,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 14,
+		"row": 10,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 14,
+		"row": 11,
+		"layers": [
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 14,
+		"row": 18,
+		"layers": [
+		  "stone_floor",
+		  "stone_floor",
+		  "stone_floor",
+		  "stone_floor",
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 14,
+		"row": 19,
+		"layers": [
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 14,
+		"row": 20,
+		"layers": [
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 15,
+		"row": 8,
+		"layers": [
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 15,
+		"row": 11,
+		"layers": [
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 16,
+		"row": 8,
+		"layers": [
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 16,
+		"row": 9,
+		"layers": [
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 16,
+		"row": 10,
+		"layers": [
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 16,
+		"row": 11,
+		"layers": [
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
+		],
+		"height": 6
+	  },
+	  {
+		"col": 29,
+		"row": 33,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 30,
+		"row": 33,
+		"layers": [
+		  "stone_floor",
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 3
+	  },
+	  {
+		"col": 30,
+		"row": 34,
+		"layers": [
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 2
+	  },
+	  {
+		"col": 31,
+		"row": 33,
+		"layers": [
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 2
+	  },
+	  {
+		"col": 31,
+		"row": 34,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  }
+	]
   },
   "description": "battle_001对应的地形配置",
   "notes": [
-    "对应 battle_001.json 的地形数据",
-    "layers数组: 索引=层高, 值=地形类型ID",
-    "地形类型从 terrain_types 目录加载",
+	"对应 battle_001.json 的地形数据",
+	"layers数组: 索引=层高, 值=地形类型ID",
+	"地形类型从 terrain_types 目录加载",
     "保存时更新此文件的 tiles 数组"
   ]
 }

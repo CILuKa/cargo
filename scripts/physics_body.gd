@@ -33,7 +33,7 @@ extends Resource
 # =============================================================================
 
 ## 重力常数（每回合下落加速度，单位：格/回合²）
-## 空中单位每回合 velocity.y 增加此值
+## 空中单位每回合 vertical_velocity 增加此值
 const GRAVITY_CONSTANT: float = 1.0
 
 
@@ -47,9 +47,15 @@ const GRAVITY_CONSTANT: float = 1.0
 
 ## 矢量速度（grid 坐标空间，单位：格/回合）
 ## - x 分量：水平（col 方向）速度
-## - y 分量：垂直（row 方向）速度，正值=向下，负值=向上（用于跃过障碍物）
+## - y 分量：水平（row 方向）速度
 ## 滑动时 magnitude 决定滑动格数，方向决定滑动方向
 @export var velocity: Vector2 = Vector2.ZERO
+
+## 垂直速度（影响 air_height，单位：格/回合）
+## - 正值：下降（重力下落）
+## - 负值：上升（被投掷向上）
+## 此值影响 air_height 变化：height_change = -vertical_velocity
+var vertical_velocity: float = 0.0
 
 ## 重力摩擦系数（地面减速系数，默认 1.0）
 ## 影响：移动消耗（move_points = move_speed / (gravity * friction)）
@@ -106,7 +112,7 @@ func kinetic_energy() -> float:
 ## 专门用于坠落碰撞伤害，仅考虑垂直速度分量
 ## 水平速度不贡献坠落伤害
 func vertical_kinetic_energy() -> float:
-	return 0.5 * mass * velocity.y * velocity.y
+	return 0.5 * mass * vertical_velocity * vertical_velocity
 
 
 ## 计算两个物理体碰撞时的总动能（静态方法）
@@ -129,14 +135,16 @@ static func collision_damage(ke: float) -> int:
 ## 施加重力加速度（每回合调用一次）
 ## a = F/m = (m * g) / m = g，即每回合下落速度增加 GRAVITY_CONSTANT
 ## 仅在空中时由 PhysicsSystem 调用
+## 注意：重力只影响 vertical_velocity（垂直速度），不影响 velocity.y（水平row方向速度）
 func apply_gravity_acceleration() -> void:
-	velocity.y += GRAVITY_CONSTANT
+	vertical_velocity += GRAVITY_CONSTANT
 
 
 ## 重置速度为零，同时清除空中状态
 ## 用于碰撞后、落地后等需要完全停止的场景
 func stop() -> void:
 	velocity = Vector2.ZERO
+	vertical_velocity = 0.0
 	is_airborne = false
 	air_height = 0.0
 	fall_height = 0.0
