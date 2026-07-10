@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="VipStudentResource" format=3 uid="uid://bp4mb50mododq"]
+
+[ext_resource type="Script" uid="uid://tiu1ngc2fcsl" path="res://data/characters/vip_student_resource.gd" id="1_4lu47"]
+
+[resource]
+script = ExtResource("1_4lu47")
+character_id = "vip_student"
+unit_name = "学生（保护目标）"
+max_hp = 15
+atk = 0
+def = 1
+matk = 0
+mdef = 1
+mental_speed = 8
+move_speed = 2
+mass = 2.0
+behavior_script_path = "res://data/characters/vip_behavior.gd"

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="KnightResource" format=3 uid="uid://ce4yo0olsjm0t"]
+
+[ext_resource type="Script" uid="uid://cp2uhot38pluc" path="res://data/characters/knight_resource.gd" id="1_5owmk"]
+
+[resource]
+script = ExtResource("1_5owmk")
+character_id = "knight"
+unit_name = "骑士"
+max_hp = 30
+atk = 8
+def = 4
+matk = 2
+mdef = 3
+mental_speed = 12
+mass = 3.0
+available_skills = Array[String](["basic_attack", "fireball", "push_force", "basic_heal"])
+equipped_skill = "basic_attack"
+behavior_script_path = "res://data/characters/knight_behavior.gd"

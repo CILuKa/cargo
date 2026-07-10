@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/battle_elements/terrain_cube.gd" id="1_tcube"]
+
+[node name="TerrainCube" type="Node3D"]
+script = ExtResource("1_tcube")

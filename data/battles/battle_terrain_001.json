@@ -5,10 +5,6 @@
 	  {
 		"col": 0,
 		"row": 0
-	  },
-	  {
-		"col": 0,
-		"row": 5
 	  }
 	],
 	"tiles": [
@@ -24,33 +20,69 @@
 		"col": 0,
 		"row": 2,
 		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "stone_floor",
+		  "stone_floor",
+		  "stone_floor",
+		  "stone_floor",
           "stone_floor"
 		],
-		"height": 1
+		"height": 13
 	  },
 	  {
 		"col": 0,
 		"row": 3,
 		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
           "stone_floor"
 		],
-		"height": 1
+		"height": 9
 	  },
 	  {
 		"col": 0,
 		"row": 4,
 		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
           "stone_floor"
 		],
-		"height": 1
+		"height": 9
 	  },
 	  {
 		"col": 0,
 		"row": 5,
 		"layers": [
+		  "stone_floor",
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
           "stone_floor"
 		],
-		"height": 1
+		"height": 9
 	  },
 	  {
 		"col": 0,
@@ -67,9 +99,12 @@
 		  "stone_wall",
 		  "stone_wall",
 		  "stone_wall",
-          "stone_wall"
+		  "stone_wall",
+		  "stone_floor",
+		  "stone_floor",
+          "stone_floor"
 		],
-		"height": 12
+		"height": 15
 	  },
 	  {
 		"col": 0,
@@ -322,9 +357,14 @@
 		"layers": [
 		  "stone_floor",
 		  "stone_wall",
-          "stone_wall"
+		  "stone_wall",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
 		],
-		"height": 3
+		"height": 8
 	  },
 	  {
 		"col": 1,
@@ -591,9 +631,15 @@
 		"row": 6,
 		"layers": [
 		  "stone_floor",
-          "stone_wall"
+		  "stone_wall",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+          "stone_floor"
 		],
-		"height": 2
+		"height": 8
 	  },
 	  {
 		"col": 2,
@@ -828,9 +874,16 @@
 		"col": 3,
 		"row": 6,
 		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
           "stone_floor"
 		],
-		"height": 1
+		"height": 8
 	  },
 	  {
 		"col": 3,
@@ -985,9 +1038,16 @@
 		"col": 4,
 		"row": 6,
 		"layers": [
+		  "stone_floor",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
+		  "__AIR__",
           "stone_floor"
 		],
-		"height": 1
+		"height": 8
 	  },
 	  {
 		"col": 4,
@@ -2090,21 +2150,30 @@
 		"col": 13,
 		"row": 16,
 		"layers": [
+		  "stone_floor",
           "stone_floor"
 		],
-		"height": 1
+		"height": 2
 	  },
 	  {
 		"col": 13,
 		"row": 17,
 		"layers": [
-		  "__AIR__",
+		  "stone_floor",
 		  "__AIR__",
 		  "__AIR__",
 		  "__AIR__",
           "stone_floor"
 		],
 		"height": 5
+	  },
+	  {
+		"col": 13,
+		"row": 19,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
 	  },
 	  {
 		"col": 14,
@@ -2147,15 +2216,16 @@
 		"col": 14,
 		"row": 10,
 		"layers": [
+		  "stone_floor",
           "stone_floor"
 		],
-		"height": 1
+		"height": 2
 	  },
 	  {
 		"col": 14,
 		"row": 11,
 		"layers": [
-		  "__AIR__",
+		  "stone_floor",
 		  "__AIR__",
 		  "__AIR__",
 		  "__AIR__",
@@ -2181,7 +2251,7 @@
 		"col": 14,
 		"row": 19,
 		"layers": [
-		  "__AIR__",
+		  "stone_floor",
 		  "__AIR__",
 		  "__AIR__",
 		  "__AIR__",
@@ -2194,7 +2264,7 @@
 		"col": 14,
 		"row": 20,
 		"layers": [
-		  "__AIR__",
+		  "stone_floor",
 		  "__AIR__",
 		  "__AIR__",
 		  "__AIR__",
@@ -2202,12 +2272,20 @@
           "stone_floor"
 		],
 		"height": 6
+	  },
+	  {
+		"col": 15,
+		"row": 7,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
 	  },
 	  {
 		"col": 15,
 		"row": 8,
 		"layers": [
-		  "__AIR__",
+		  "stone_floor",
 		  "__AIR__",
 		  "__AIR__",
 		  "__AIR__",
@@ -2218,9 +2296,25 @@
 	  },
 	  {
 		"col": 15,
+		"row": 9,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 15,
+		"row": 10,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 15,
 		"row": 11,
 		"layers": [
-		  "__AIR__",
+		  "stone_floor",
 		  "__AIR__",
 		  "__AIR__",
 		  "__AIR__",
@@ -2231,9 +2325,17 @@
 	  },
 	  {
 		"col": 16,
+		"row": 7,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 16,
 		"row": 8,
 		"layers": [
-		  "__AIR__",
+		  "stone_floor",
 		  "__AIR__",
 		  "__AIR__",
 		  "__AIR__",
@@ -2246,7 +2348,7 @@
 		"col": 16,
 		"row": 9,
 		"layers": [
-		  "__AIR__",
+		  "stone_floor",
 		  "__AIR__",
 		  "__AIR__",
 		  "__AIR__",
@@ -2259,7 +2361,7 @@
 		"col": 16,
 		"row": 10,
 		"layers": [
-		  "__AIR__",
+		  "stone_floor",
 		  "__AIR__",
 		  "__AIR__",
 		  "__AIR__",
@@ -2272,14 +2374,104 @@
 		"col": 16,
 		"row": 11,
 		"layers": [
-		  "__AIR__",
-		  "__AIR__",
+		  "stone_floor",
+		  "stone_floor",
 		  "__AIR__",
 		  "__AIR__",
 		  "__AIR__",
           "stone_floor"
 		],
 		"height": 6
+	  },
+	  {
+		"col": 17,
+		"row": 6,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 17,
+		"row": 7,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 17,
+		"row": 8,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 17,
+		"row": 9,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 17,
+		"row": 10,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 17,
+		"row": 11,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 18,
+		"row": 8,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 20,
+		"row": 10,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 22,
+		"row": 12,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 24,
+		"row": 15,
+		"layers": [
+          "stone_floor"
+		],
+		"height": 1
+	  },
+	  {
+		"col": 25,
+		"row": 16,
+		"layers": [
+		  "stone_floor",
+		  "stone_floor",
+          "stone_floor"
+		],
+		"height": 3
 	  },
 	  {
 		"col": 29,

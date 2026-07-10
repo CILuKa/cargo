@@ -36,7 +36,7 @@
 	  "description": "保护成功：学生存活",
 	  "type": "unit_alive",
 	  "params": {"unit_id": "vip_student"},
-	  "next": "battle_001_win"
+	  "next": {"file": "res://data/story/story_ch1_battle_win.json", "node": "battle_001_win"}
 	}
   ],
 

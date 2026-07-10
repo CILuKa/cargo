@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TerrainType" format=3 uid="uid://d0v60bcskgm7c"]
+
+[ext_resource type="Script" uid="uid://dhbjt4ytguuru" path="res://data/terrain_types/terrain_type.gd" id="1_4dmph"]
+
+[resource]
+script = ExtResource("1_4dmph")
+terrain_type_id = "stone_wall"
+display_name = "石制墙壁"
+usage_type = 0
+mass = 500.0
+is_passable = false
+texture_paths = Array[String](["res://textures/terrain/stone_wall/right.png", "res://textures/terrain/stone_wall/left.png", "res://textures/terrain/stone_wall/top.png", "res://textures/terrain/stone_wall/bottom.png", "res://textures/terrain/stone_wall/front.png", "res://textures/terrain/stone_wall/back.png"])
+base_height = 3

@@ -944,9 +944,10 @@ func _on_tactics_pressed():
 
 ## 剧情触发 battle 效果后，DialogueManager 发出 battle_started 信号
 ## 此方法加载战斗配置并显示战棋棋盘
+## @param config_path: 战斗配置路径（.tscn 场景 或 .json 文件）
 func _on_battle_started(config_path: String):
-	# 加载战斗配置（背景、单位、格子颜色等）
-	tactics_board.load_battle_config(config_path)
+	# 使用通用加载入口（自动检测 .tscn 或 .json）
+	tactics_board.load_battle(config_path)
 	# 启动回合制战斗
 	tactics_board.start_battle()
 	# 隐藏对话 UI，全屏进入战斗

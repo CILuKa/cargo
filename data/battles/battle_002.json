@@ -59,57 +59,57 @@
   "units": [
 	{
 	  "id": "knight_1",
+	  "character_id": "knight",
 	  "type": "sprite",
 	  "col": 1,
 	  "row": 4,
 	  "texture": "res://assets/units/knight.png",
-	  "team": "player",
-	  "properties": {"hp": 12, "atk": 4, "def": 3, "name": "护航骑士"}
+	  "team": "player"
 	},
 	{
 	  "id": "archer_1",
+	  "character_id": "knight",
 	  "type": "sprite",
 	  "col": 1,
 	  "row": 5,
 	  "texture": "res://assets/units/archer.png",
-	  "team": "player",
-	  "properties": {"hp": 8, "atk": 5, "def": 1, "name": "弓箭手"}
+	  "team": "player"
 	},
 	{
 	  "id": "vip_merchant",
+	  "character_id": "vip_student",
 	  "type": "sprite",
 	  "col": 1,
 	  "row": 6,
 	  "texture": "res://assets/units/merchant.png",
-	  "team": "neutral",
-	  "properties": {"hp": 3, "atk": 0, "def": 0, "name": "商人（护送目标）", "speed": 2}
+	  "team": "neutral"
 	},
 	{
 	  "id": "bandit_1",
+	  "character_id": "slime",
 	  "type": "sprite",
 	  "col": 8,
 	  "row": 3,
 	  "texture": "res://assets/units/bandit.png",
-	  "team": "enemy",
-	  "properties": {"hp": 6, "atk": 3, "def": 1, "name": "山贼A"}
+	  "team": "enemy"
 	},
 	{
 	  "id": "bandit_2",
+	  "character_id": "slime",
 	  "type": "sprite",
 	  "col": 8,
 	  "row": 4,
 	  "texture": "res://assets/units/bandit.png",
-	  "team": "enemy",
-	  "properties": {"hp": 6, "atk": 3, "def": 1, "name": "山贼B"}
+	  "team": "enemy"
 	},
 	{
 	  "id": "bandit_boss",
+	  "character_id": "slime",
 	  "type": "sprite",
 	  "col": 8,
 	  "row": 5,
 	  "texture": "res://assets/units/bandit_boss.png",
-	  "team": "enemy",
-	  "properties": {"hp": 10, "atk": 5, "def": 2, "name": "山贼头目"}
+	  "team": "enemy"
 	}
   ]
 }

@@ -1,0 +1,17 @@
+{
+  "character_id": "knight",
+  "type": "knight",
+  "name": "骑士",
+  "hp": 30,
+  "atk": 8,
+  "def": 4,
+  "matk": 2,
+  "mdef": 3,
+  "mental_speed": 12,
+  "move_speed": 3,
+  "mass": 3.0,
+  "available_skills": ["basic_attack", "fireball", "push_force", "basic_heal"],
+  "equipped_skill": "basic_attack",
+  "shield_defense_bonus": 0,
+  "counter_attack_chance": 0.0
+}

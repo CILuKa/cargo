@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="TerrainType" format=3 uid="uid://dsrhlurbuieki"]
+
+[ext_resource type="Script" uid="uid://dhbjt4ytguuru" path="res://data/terrain_types/terrain_type.gd" id="1_nb4sx"]
+
+[resource]
+script = ExtResource("1_nb4sx")
+terrain_type_id = "stone_floor"
+display_name = "石制地面"
+is_passable = false
+texture_paths = Array[String](["res://textures/terrain/stone_floor/right.png", "res://textures/terrain/stone_floor/left.png", "res://textures/terrain/stone_floor/top.png", "res://textures/terrain/stone_floor/bottom.png", "res://textures/terrain/stone_floor/front.png", "res://textures/terrain/stone_floor/back.png"])

@@ -124,10 +124,22 @@ func _ready() -> void:
 
 ## 受到伤害
 func take_damage(amount: int) -> int:
+	# 行为脚本：受伤前（可修改伤害量）
+	var behavior := _get_behavior()
+	if behavior:
+		amount = behavior._on_before_damage(amount)
+		if amount <= 0:
+			return 0
+
 	var old_hp: int = current_hp
 	current_hp = maxi(0, current_hp - amount)
 	var actual_damage: int = old_hp - current_hp
 	hp_changed.emit(self, old_hp, current_hp)
+
+	# 行为脚本：受伤后
+	if behavior:
+		behavior._on_after_damage(amount, actual_damage)
+
 	if current_hp <= 0:
 		_on_death()
 	return actual_damage
@@ -139,6 +151,10 @@ func heal(amount: int) -> int:
 	current_hp = mini(max_hp, current_hp + amount)
 	var actual_heal: int = current_hp - old_hp
 	hp_changed.emit(self, old_hp, current_hp)
+	# 行为脚本：被治疗
+	var behavior := _get_behavior()
+	if behavior:
+		behavior._on_heal(amount)
 	return actual_heal
 
 
@@ -149,7 +165,20 @@ func is_dead() -> bool:
 
 ## 死亡处理（可被子类覆盖）
 func _on_death() -> void:
+	# 行为脚本：死亡时
+	var behavior := _get_behavior()
+	if behavior:
+		behavior._on_death()
 	died.emit(self)
+
+
+# =============================================================================
+# 行为脚本
+# =============================================================================
+
+## 获取挂载的行为脚本（无则返回 null）
+func _get_behavior() -> UnitBehavior:
+	return get_node_or_null("Behavior") as UnitBehavior
 
 
 # =============================================================================

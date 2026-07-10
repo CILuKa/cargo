@@ -1,0 +1,18 @@
+{
+  "character_id": "vip_student",
+  "type": "vip_student",
+  "name": "学生（保护目标）",
+  "hp": 15,
+  "atk": 0,
+  "def": 1,
+  "matk": 0,
+  "mdef": 1,
+  "mental_speed": 8,
+  "move_speed": 2,
+  "mass": 2.0,
+  "available_skills": [],
+  "equipped_skill": "",
+  "is_protected_target": true,
+  "protection_priority": 1,
+  "auto_dodge_chance": 0.0
+}

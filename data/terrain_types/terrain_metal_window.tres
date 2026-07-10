@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TerrainType" format=3 uid="uid://5t7grw0vwic3"]
+
+[ext_resource type="Script" uid="uid://dhbjt4ytguuru" path="res://data/terrain_types/terrain_type.gd" id="1_byj44"]
+
+[resource]
+script = ExtResource("1_byj44")
+terrain_type_id = "metal_window"
+display_name = "金属窗户"
+usage_type = 2
+material_type = 3
+mass = 30.0
+friction_coefficient = 0.8
+custom_max_health = 900
+is_attackable = true
+is_passable = false
+texture_paths = Array[String](["res://textures/terrain/metal_window/right.png", "res://textures/terrain/metal_window/left.png", "res://textures/terrain/metal_window/top.png", "res://textures/terrain/metal_window/bottom.png", "res://textures/terrain/metal_window/front.png", "res://textures/terrain/metal_window/back.png"])
+base_height = 2

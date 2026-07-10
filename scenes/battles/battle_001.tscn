@@ -1,0 +1,2479 @@
+[gd_scene format=3 uid="uid://dmux2ak76v01s"]
+
+[ext_resource type="Script" uid="uid://bgamfxqgqu77j" path="res://scripts/battle_scene.gd" id="1_tgig5"]
+[ext_resource type="Script" uid="uid://e8eqkhbf100t" path="res://scripts/resources/unit_spawn_config.gd" id="2_c7lxk"]
+[ext_resource type="Script" uid="uid://bu4bkko17xra4" path="res://scripts/resources/condition_resource.gd" id="3_iaja6"]
+[ext_resource type="PackedScene" path="res://scenes/battle_elements/terrain_cube.tscn" id="4_04wev"]
+[ext_resource type="PackedScene" path="res://scenes/battle_elements/unit_spawn_marker.tscn" id="6_4yfpn"]
+
+[sub_resource type="Resource" id="Resource_04wev"]
+script = ExtResource("2_c7lxk")
+spawn_id = "knight_1"
+character_id = "knight"
+col = 2
+row = 3
+texture_path = "res://assets/units/knight.png"
+
+[sub_resource type="Resource" id="Resource_lnj5g"]
+script = ExtResource("2_c7lxk")
+spawn_id = "vip_student"
+character_id = "vip_student"
+col = 4
+row = 3
+team = "neutral"
+texture_path = "res://assets/units/student.png"
+
+[sub_resource type="Resource" id="Resource_4yfpn"]
+script = ExtResource("2_c7lxk")
+spawn_id = "slime_1"
+character_id = "slime"
+col = 7
+row = 6
+team = "enemy"
+texture_path = "res://assets/units/goblin.png"
+
+[sub_resource type="Resource" id="Resource_x2uqi"]
+script = ExtResource("3_iaja6")
+condition_id = "flawless"
+description = "完美胜利：消灭所有敌人"
+type = "eliminate_all"
+params = {
+"team": "enemy"
+}
+next_branch = "battle_001_flawless"
+
+[sub_resource type="Resource" id="Resource_j4tec"]
+script = ExtResource("3_iaja6")
+condition_id = "retreat"
+description = "击退敌人：消灭至少1个敌人"
+type = "eliminate_count"
+params = {
+"count": 1.0,
+"team": "enemy"
+}
+next_branch = "battle_001_retreat"
+
+[sub_resource type="Resource" id="Resource_4021j"]
+script = ExtResource("3_iaja6")
+condition_id = "protect_success"
+description = "保护成功：学生存活"
+type = "unit_alive"
+params = {
+"unit_id": "vip_student"
+}
+next_branch = "battle_001_win"
+next_file = "res://data/story/story_ch1_battle_win.json"
+
+[sub_resource type="Resource" id="Resource_42beg"]
+script = ExtResource("3_iaja6")
+condition_id = "allied_dead"
+description = "我方全灭"
+type = "all_units_dead"
+params = {
+"team": "player"
+}
+next_branch = "battle_001_lose"
+
+[sub_resource type="Resource" id="Resource_objmo"]
+script = ExtResource("3_iaja6")
+condition_id = "vip_dead"
+description = "保护目标死亡"
+type = "unit_dead"
+params = {
+"unit_id": "vip_student"
+}
+next_branch = "battle_001_vip_dead"
+
+[sub_resource type="Environment" id="Environment_nf5w1"]
+ambient_light_source = 3
+ambient_light_color = Color(0.6, 0.6, 0.65, 1)
+ambient_light_energy = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xasxq"]
+albedo_color = Color(0.1, 0.08, 0.05, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ng87r"]
+size = Vector3(70, 0.04, 55)
+
+[node name="_Node3D_25009" type="Node3D" unique_id=44396426]
+script = ExtResource("1_tgig5")
+battle_id = "battle_001"
+display_name = "史莱姆遭遇战"
+grid_cols = 70
+grid_rows = 55
+terrain_json_path = "res://data/battles/battle_terrain_001.json"
+unit_spawns = Array[ExtResource("2_c7lxk")]([SubResource("Resource_04wev"), SubResource("Resource_lnj5g"), SubResource("Resource_4yfpn")])
+win_conditions = Array[ExtResource("3_iaja6")]([SubResource("Resource_x2uqi"), SubResource("Resource_j4tec"), SubResource("Resource_4021j")])
+lose_conditions = Array[ExtResource("3_iaja6")]([SubResource("Resource_42beg"), SubResource("Resource_objmo")])
+tile_light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+tile_dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=551301821]
+environment = SubResource("Environment_nf5w1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=2029616906]
+transform = Transform3D(0.70710677, -0.579228, 0.4055798, 0, 0.57357645, 0.81915206, -0.70710677, -0.579228, 0.4055798, 0, 0, 0)
+light_color = Color(1, 0.95, 0.9, 1)
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1637454646]
+transform = Transform3D(0.70710677, 0.579228, -0.4055798, 0, 0.57357645, 0.81915206, 0.70710677, -0.579228, 0.4055798, -3.9484735, 52.60658, 2.5515265)
+fov = 45.0
+near = 0.1
+far = 500.0
+
+[node name="TerrainContainer" type="Node3D" parent="." unique_id=1077026688]
+
+[node name="BasePlatform" type="MeshInstance3D" parent="TerrainContainer" unique_id=738182716]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.02, 0)
+material_override = SubResource("StandardMaterial3D_xasxq")
+mesh = SubResource("BoxMesh_ng87r")
+
+[node name="Cube_0_1" parent="TerrainContainer" unique_id=319417786 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -26)
+row = 1
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_2" parent="TerrainContainer" unique_id=1625673561 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -25)
+row = 2
+height = 12
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor", "stone_floor", "stone_floor", "stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_3" parent="TerrainContainer" unique_id=547990486 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -24)
+row = 3
+height = 8
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_4" parent="TerrainContainer" unique_id=663911587 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -23)
+row = 4
+height = 8
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_5" parent="TerrainContainer" unique_id=605316439 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -22)
+row = 5
+height = 8
+layers = ["stone_floor", "stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_6" parent="TerrainContainer" unique_id=2142497347 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -21)
+row = 6
+height = 14
+layers = ["stone_floor", "stone_wall", "stone_wall", "stone_wall", "stone_wall", "stone_wall", "stone_wall", "stone_wall", "stone_wall", "stone_wall", "stone_wall", "stone_wall", "stone_floor", "stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_7" parent="TerrainContainer" unique_id=1892440541 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -20)
+row = 7
+height = 5
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall", "stone_wall", "stone_wall", "stone_wall", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_8" parent="TerrainContainer" unique_id=988781142 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -19)
+row = 8
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_9" parent="TerrainContainer" unique_id=17209681 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -18)
+row = 9
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_10" parent="TerrainContainer" unique_id=2099654670 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -17)
+row = 10
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_11" parent="TerrainContainer" unique_id=495885245 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -16)
+row = 11
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_12" parent="TerrainContainer" unique_id=2024265496 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -15)
+row = 12
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_13" parent="TerrainContainer" unique_id=464515769 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -14)
+row = 13
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_14" parent="TerrainContainer" unique_id=525293345 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -13)
+row = 14
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_15" parent="TerrainContainer" unique_id=404227206 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -12)
+row = 15
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_16" parent="TerrainContainer" unique_id=84886711 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -11)
+row = 16
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_17" parent="TerrainContainer" unique_id=1335526782 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -10)
+row = 17
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_18" parent="TerrainContainer" unique_id=445684439 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -9)
+row = 18
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_19" parent="TerrainContainer" unique_id=885500643 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -8)
+row = 19
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_20" parent="TerrainContainer" unique_id=1486585901 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -7)
+row = 20
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_21" parent="TerrainContainer" unique_id=652843266 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -6)
+row = 21
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_22" parent="TerrainContainer" unique_id=410270787 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -5)
+row = 22
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_23" parent="TerrainContainer" unique_id=290287041 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -4)
+row = 23
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_24" parent="TerrainContainer" unique_id=1192815315 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -3)
+row = 24
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_25" parent="TerrainContainer" unique_id=672783641 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -2)
+row = 25
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_26" parent="TerrainContainer" unique_id=109230252 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, -1)
+row = 26
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_27" parent="TerrainContainer" unique_id=257803254 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, 0)
+row = 27
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_28" parent="TerrainContainer" unique_id=1963008711 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, 1)
+row = 28
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_29" parent="TerrainContainer" unique_id=1226721419 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, 2)
+row = 29
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_0_30" parent="TerrainContainer" unique_id=1378682018 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0, 3)
+row = 30
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_0" parent="TerrainContainer" unique_id=1473914976 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -27)
+col = 1
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_1" parent="TerrainContainer" unique_id=1163582576 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -26)
+col = 1
+row = 1
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_2" parent="TerrainContainer" unique_id=144572401 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -25)
+col = 1
+row = 2
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_3" parent="TerrainContainer" unique_id=910459612 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -24)
+col = 1
+row = 3
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_4" parent="TerrainContainer" unique_id=713526748 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -23)
+col = 1
+row = 4
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_5" parent="TerrainContainer" unique_id=667269458 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -22)
+col = 1
+row = 5
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_6" parent="TerrainContainer" unique_id=1313684393 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -21)
+col = 1
+row = 6
+height = 7
+layers = ["stone_floor", "stone_wall", "stone_wall", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_7" parent="TerrainContainer" unique_id=1129324753 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -20)
+col = 1
+row = 7
+height = 3
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall", "stone_wall", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_8" parent="TerrainContainer" unique_id=1215654919 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -19)
+col = 1
+row = 8
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_9" parent="TerrainContainer" unique_id=419146422 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -18)
+col = 1
+row = 9
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_10" parent="TerrainContainer" unique_id=546221251 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -17)
+col = 1
+row = 10
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_11" parent="TerrainContainer" unique_id=956513207 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -16)
+col = 1
+row = 11
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_12" parent="TerrainContainer" unique_id=227318539 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -15)
+col = 1
+row = 12
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_13" parent="TerrainContainer" unique_id=2102387432 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -14)
+col = 1
+row = 13
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_14" parent="TerrainContainer" unique_id=465629650 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -13)
+col = 1
+row = 14
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_15" parent="TerrainContainer" unique_id=2027323432 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -12)
+col = 1
+row = 15
+height = 4
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall", "stone_wall", "stone_wall", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_16" parent="TerrainContainer" unique_id=1941557416 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -11)
+col = 1
+row = 16
+height = 1
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_17" parent="TerrainContainer" unique_id=877710149 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -10)
+col = 1
+row = 17
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_18" parent="TerrainContainer" unique_id=1598908868 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -9)
+col = 1
+row = 18
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_19" parent="TerrainContainer" unique_id=1516911126 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -8)
+col = 1
+row = 19
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_20" parent="TerrainContainer" unique_id=1915248563 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -7)
+col = 1
+row = 20
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_21" parent="TerrainContainer" unique_id=1294762416 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -6)
+col = 1
+row = 21
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_22" parent="TerrainContainer" unique_id=1738902841 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -5)
+col = 1
+row = 22
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_23" parent="TerrainContainer" unique_id=882059206 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -4)
+col = 1
+row = 23
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_24" parent="TerrainContainer" unique_id=97825530 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -3)
+col = 1
+row = 24
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_25" parent="TerrainContainer" unique_id=732482450 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -2)
+col = 1
+row = 25
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_26" parent="TerrainContainer" unique_id=968189633 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, -1)
+col = 1
+row = 26
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_27" parent="TerrainContainer" unique_id=232502582 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, 0)
+col = 1
+row = 27
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_28" parent="TerrainContainer" unique_id=1286086462 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, 1)
+col = 1
+row = 28
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_29" parent="TerrainContainer" unique_id=2043623188 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, 2)
+col = 1
+row = 29
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_30" parent="TerrainContainer" unique_id=1068785508 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, 3)
+col = 1
+row = 30
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_1_31" parent="TerrainContainer" unique_id=884918520 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 0, 4)
+col = 1
+row = 31
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_0" parent="TerrainContainer" unique_id=2077006359 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -27)
+col = 2
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_1" parent="TerrainContainer" unique_id=2126477241 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -26)
+col = 2
+row = 1
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_2" parent="TerrainContainer" unique_id=1818427896 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -25)
+col = 2
+row = 2
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_3" parent="TerrainContainer" unique_id=355597821 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -24)
+col = 2
+row = 3
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_4" parent="TerrainContainer" unique_id=770441169 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -23)
+col = 2
+row = 4
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_5" parent="TerrainContainer" unique_id=886211799 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -22)
+col = 2
+row = 5
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_6" parent="TerrainContainer" unique_id=846140963 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -21)
+col = 2
+row = 6
+height = 7
+layers = ["stone_floor", "stone_wall", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_7" parent="TerrainContainer" unique_id=1115683248 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -20)
+col = 2
+row = 7
+height = 1
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_8" parent="TerrainContainer" unique_id=868766179 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -19)
+col = 2
+row = 8
+height = 1
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_9" parent="TerrainContainer" unique_id=1257036402 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -18)
+col = 2
+row = 9
+height = 1
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_10" parent="TerrainContainer" unique_id=1921885706 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -17)
+col = 2
+row = 10
+height = 1
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_11" parent="TerrainContainer" unique_id=558199016 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -16)
+col = 2
+row = 11
+height = 1
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_12" parent="TerrainContainer" unique_id=1275646155 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -15)
+col = 2
+row = 12
+height = 1
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_13" parent="TerrainContainer" unique_id=182434525 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -14)
+col = 2
+row = 13
+height = 1
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_14" parent="TerrainContainer" unique_id=1281836433 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -13)
+col = 2
+row = 14
+height = 1
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_15" parent="TerrainContainer" unique_id=976129399 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -12)
+col = 2
+row = 15
+height = 2
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_16" parent="TerrainContainer" unique_id=1641192046 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -11)
+col = 2
+row = 16
+height = 1
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_17" parent="TerrainContainer" unique_id=159946206 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -10)
+col = 2
+row = 17
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_18" parent="TerrainContainer" unique_id=743134725 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -9)
+col = 2
+row = 18
+height = 1
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_19" parent="TerrainContainer" unique_id=1382616942 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -8)
+col = 2
+row = 19
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_20" parent="TerrainContainer" unique_id=1847240023 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -7)
+col = 2
+row = 20
+height = 4
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall", "stone_wall", "stone_wall", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_21" parent="TerrainContainer" unique_id=1369907067 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -6)
+col = 2
+row = 21
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_22" parent="TerrainContainer" unique_id=2100496256 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -5)
+col = 2
+row = 22
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_23" parent="TerrainContainer" unique_id=550823459 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -4)
+col = 2
+row = 23
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_24" parent="TerrainContainer" unique_id=43012618 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -3)
+col = 2
+row = 24
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_25" parent="TerrainContainer" unique_id=60318176 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -2)
+col = 2
+row = 25
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_2_26" parent="TerrainContainer" unique_id=901478676 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, -1)
+col = 2
+row = 26
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_0" parent="TerrainContainer" unique_id=191083958 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -27)
+col = 3
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_1" parent="TerrainContainer" unique_id=66554817 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -26)
+col = 3
+row = 1
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_2" parent="TerrainContainer" unique_id=1102325458 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -25)
+col = 3
+row = 2
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_3" parent="TerrainContainer" unique_id=627141701 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -24)
+col = 3
+row = 3
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_4" parent="TerrainContainer" unique_id=800994029 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -23)
+col = 3
+row = 4
+height = 1
+terrain_type = "hill"
+layers = ["hill", "hill"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_5" parent="TerrainContainer" unique_id=1617768335 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -22)
+col = 3
+row = 5
+height = 1
+terrain_type = "hill"
+layers = ["hill", "hill"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_6" parent="TerrainContainer" unique_id=1196572459 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -21)
+col = 3
+row = 6
+height = 7
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_7" parent="TerrainContainer" unique_id=1175422122 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -20)
+col = 3
+row = 7
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_8" parent="TerrainContainer" unique_id=1199350094 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -19)
+col = 3
+row = 8
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_9" parent="TerrainContainer" unique_id=1283411310 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -18)
+col = 3
+row = 9
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_10" parent="TerrainContainer" unique_id=1051944563 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -17)
+col = 3
+row = 10
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_11" parent="TerrainContainer" unique_id=2037092593 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -16)
+col = 3
+row = 11
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_12" parent="TerrainContainer" unique_id=1254634711 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -15)
+col = 3
+row = 12
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_13" parent="TerrainContainer" unique_id=473183490 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -14)
+col = 3
+row = 13
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_14" parent="TerrainContainer" unique_id=1848785684 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -13)
+col = 3
+row = 14
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_15" parent="TerrainContainer" unique_id=2082793979 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -12)
+col = 3
+row = 15
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_16" parent="TerrainContainer" unique_id=2099619394 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -11)
+col = 3
+row = 16
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_17" parent="TerrainContainer" unique_id=1827806109 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -10)
+col = 3
+row = 17
+height = 1
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_18" parent="TerrainContainer" unique_id=1810512560 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -9)
+col = 3
+row = 18
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_19" parent="TerrainContainer" unique_id=684017650 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -8)
+col = 3
+row = 19
+height = 1
+terrain_type = "stone_wall"
+layers = ["stone_floor", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_20" parent="TerrainContainer" unique_id=1245260887 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -7)
+col = 3
+row = 20
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_3_21" parent="TerrainContainer" unique_id=397542784 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.5, 0, -6)
+col = 3
+row = 21
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_0" parent="TerrainContainer" unique_id=1529141052 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -27)
+col = 4
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_4" parent="TerrainContainer" unique_id=1718182843 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -23)
+col = 4
+row = 4
+height = 1
+terrain_type = "hill"
+layers = ["hill", "hill"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_5" parent="TerrainContainer" unique_id=2003529304 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -22)
+col = 4
+row = 5
+height = 2
+terrain_type = "hill"
+layers = ["hill", "hill", "hill"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_6" parent="TerrainContainer" unique_id=878013308 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -21)
+col = 4
+row = 6
+height = 7
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_7" parent="TerrainContainer" unique_id=5142348 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -20)
+col = 4
+row = 7
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_8" parent="TerrainContainer" unique_id=577385428 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -19)
+col = 4
+row = 8
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_9" parent="TerrainContainer" unique_id=1301473797 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -18)
+col = 4
+row = 9
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_10" parent="TerrainContainer" unique_id=313867510 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -17)
+col = 4
+row = 10
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_11" parent="TerrainContainer" unique_id=1526332362 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -16)
+col = 4
+row = 11
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_12" parent="TerrainContainer" unique_id=861977848 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -15)
+col = 4
+row = 12
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_13" parent="TerrainContainer" unique_id=1779809864 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -14)
+col = 4
+row = 13
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_14" parent="TerrainContainer" unique_id=861652374 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -13)
+col = 4
+row = 14
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_15" parent="TerrainContainer" unique_id=1242557598 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -12)
+col = 4
+row = 15
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_16" parent="TerrainContainer" unique_id=2085197511 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -11)
+col = 4
+row = 16
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_17" parent="TerrainContainer" unique_id=555900954 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -10)
+col = 4
+row = 17
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_18" parent="TerrainContainer" unique_id=428001343 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -9)
+col = 4
+row = 18
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_4_19" parent="TerrainContainer" unique_id=1742548395 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 0, -8)
+col = 4
+row = 19
+height = 1
+terrain_type = "stone_wall"
+layers = ["stone_wall", "stone_wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_5_0" parent="TerrainContainer" unique_id=511531201 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.5, 0, -27)
+col = 5
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_5_8" parent="TerrainContainer" unique_id=269640717 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.5, 0, -19)
+col = 5
+row = 8
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_5_9" parent="TerrainContainer" unique_id=409550507 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.5, 0, -18)
+col = 5
+row = 9
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_5_10" parent="TerrainContainer" unique_id=635489588 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.5, 0, -17)
+col = 5
+row = 10
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_5_11" parent="TerrainContainer" unique_id=202391145 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.5, 0, -16)
+col = 5
+row = 11
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_5_12" parent="TerrainContainer" unique_id=1197807535 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.5, 0, -15)
+col = 5
+row = 12
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_5_13" parent="TerrainContainer" unique_id=911857017 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.5, 0, -14)
+col = 5
+row = 13
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_5_14" parent="TerrainContainer" unique_id=252190242 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.5, 0, -13)
+col = 5
+row = 14
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_6_1" parent="TerrainContainer" unique_id=1471179516 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0, -26)
+col = 6
+row = 1
+height = 1
+terrain_type = "wooden_door_open"
+layers = ["wooden_door_open", "wooden_door_open"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_6_4" parent="TerrainContainer" unique_id=1710827608 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0, -23)
+col = 6
+row = 4
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_6_5" parent="TerrainContainer" unique_id=1146822612 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0, -22)
+col = 6
+row = 5
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_6_6" parent="TerrainContainer" unique_id=854737696 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0, -21)
+col = 6
+row = 6
+height = 1
+terrain_type = "wall"
+layers = ["wall", "wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_6_7" parent="TerrainContainer" unique_id=496846860 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0, -20)
+col = 6
+row = 7
+height = 1
+terrain_type = "wall"
+layers = ["wall", "wall"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_6_8" parent="TerrainContainer" unique_id=877981701 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0, -19)
+col = 6
+row = 8
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_6_9" parent="TerrainContainer" unique_id=2052737501 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0, -18)
+col = 6
+row = 9
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_6_10" parent="TerrainContainer" unique_id=1462250616 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0, -17)
+col = 6
+row = 10
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_6_11" parent="TerrainContainer" unique_id=1473950205 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0, -16)
+col = 6
+row = 11
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_6_12" parent="TerrainContainer" unique_id=1356112357 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0, -15)
+col = 6
+row = 12
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_6_13" parent="TerrainContainer" unique_id=1690265578 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0, -14)
+col = 6
+row = 13
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_6_14" parent="TerrainContainer" unique_id=708451726 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0, -13)
+col = 6
+row = 14
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_6_15" parent="TerrainContainer" unique_id=978277147 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 0, -12)
+col = 6
+row = 15
+height = 2
+layers = ["stone_floor", "stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_7_0" parent="TerrainContainer" unique_id=107473905 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 0, -27)
+col = 7
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_7_1" parent="TerrainContainer" unique_id=1836392037 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 0, -26)
+col = 7
+row = 1
+height = 1
+terrain_type = "wooden_door_closed"
+layers = ["wooden_door_closed", "wooden_door_closed"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_7_4" parent="TerrainContainer" unique_id=455067654 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 0, -23)
+col = 7
+row = 4
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_7_5" parent="TerrainContainer" unique_id=1530304580 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 0, -22)
+col = 7
+row = 5
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_7_6" parent="TerrainContainer" unique_id=2095677939 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 0, -21)
+col = 7
+row = 6
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_7_7" parent="TerrainContainer" unique_id=2051316925 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 0, -20)
+col = 7
+row = 7
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_7_8" parent="TerrainContainer" unique_id=134994505 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 0, -19)
+col = 7
+row = 8
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_7_9" parent="TerrainContainer" unique_id=664623265 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 0, -18)
+col = 7
+row = 9
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_7_10" parent="TerrainContainer" unique_id=1293094027 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 0, -17)
+col = 7
+row = 10
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_7_11" parent="TerrainContainer" unique_id=31371991 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 0, -16)
+col = 7
+row = 11
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_7_12" parent="TerrainContainer" unique_id=715892779 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 0, -15)
+col = 7
+row = 12
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_7_13" parent="TerrainContainer" unique_id=1273062089 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 0, -14)
+col = 7
+row = 13
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_7_14" parent="TerrainContainer" unique_id=1430435506 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 0, -13)
+col = 7
+row = 14
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_7_16" parent="TerrainContainer" unique_id=36687278 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 0, -11)
+col = 7
+row = 16
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_8_1" parent="TerrainContainer" unique_id=1973692093 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.5, 0, -26)
+col = 8
+row = 1
+height = 1
+terrain_type = "wooden_door_closed"
+layers = ["wooden_door_closed", "wooden_door_closed"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_8_4" parent="TerrainContainer" unique_id=1925873169 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.5, 0, -23)
+col = 8
+row = 4
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_8_5" parent="TerrainContainer" unique_id=524181113 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.5, 0, -22)
+col = 8
+row = 5
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_8_6" parent="TerrainContainer" unique_id=1344080944 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.5, 0, -21)
+col = 8
+row = 6
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_8_7" parent="TerrainContainer" unique_id=142063545 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.5, 0, -20)
+col = 8
+row = 7
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_8_8" parent="TerrainContainer" unique_id=1898268874 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.5, 0, -19)
+col = 8
+row = 8
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_8_9" parent="TerrainContainer" unique_id=1531924350 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.5, 0, -18)
+col = 8
+row = 9
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_8_10" parent="TerrainContainer" unique_id=1534479488 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.5, 0, -17)
+col = 8
+row = 10
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_8_11" parent="TerrainContainer" unique_id=1442626478 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.5, 0, -16)
+col = 8
+row = 11
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_8_12" parent="TerrainContainer" unique_id=1843606480 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.5, 0, -15)
+col = 8
+row = 12
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_8_13" parent="TerrainContainer" unique_id=1501886822 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.5, 0, -14)
+col = 8
+row = 13
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_8_14" parent="TerrainContainer" unique_id=1927410185 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.5, 0, -13)
+col = 8
+row = 14
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_9_1" parent="TerrainContainer" unique_id=299340860 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, -26)
+col = 9
+row = 1
+height = 1
+terrain_type = "wooden_door_closed"
+layers = ["wooden_door_closed", "wooden_door_closed"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_9_4" parent="TerrainContainer" unique_id=253905059 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, -23)
+col = 9
+row = 4
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_9_5" parent="TerrainContainer" unique_id=1328376549 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, -22)
+col = 9
+row = 5
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_9_6" parent="TerrainContainer" unique_id=511051092 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, -21)
+col = 9
+row = 6
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_9_7" parent="TerrainContainer" unique_id=1302657794 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, -20)
+col = 9
+row = 7
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_9_8" parent="TerrainContainer" unique_id=115208646 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, -19)
+col = 9
+row = 8
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_9_9" parent="TerrainContainer" unique_id=962124191 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, -18)
+col = 9
+row = 9
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_9_10" parent="TerrainContainer" unique_id=425546550 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, -17)
+col = 9
+row = 10
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_9_11" parent="TerrainContainer" unique_id=356519521 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, -16)
+col = 9
+row = 11
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_9_12" parent="TerrainContainer" unique_id=1760949405 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, -15)
+col = 9
+row = 12
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_9_13" parent="TerrainContainer" unique_id=5557796 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, -14)
+col = 9
+row = 13
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_9_14" parent="TerrainContainer" unique_id=87075967 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, -13)
+col = 9
+row = 14
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_9_15" parent="TerrainContainer" unique_id=1030995964 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, -12)
+col = 9
+row = 15
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_9_17" parent="TerrainContainer" unique_id=713133270 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 0, -10)
+col = 9
+row = 17
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_1" parent="TerrainContainer" unique_id=1429599303 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -26)
+col = 10
+row = 1
+terrain_type = "wooden_door_closed"
+layers = ["wooden_door_closed"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_3" parent="TerrainContainer" unique_id=1064959831 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -24)
+col = 10
+row = 3
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_4" parent="TerrainContainer" unique_id=1293186496 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -23)
+col = 10
+row = 4
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_5" parent="TerrainContainer" unique_id=1213194612 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -22)
+col = 10
+row = 5
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_6" parent="TerrainContainer" unique_id=1157498383 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -21)
+col = 10
+row = 6
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_7" parent="TerrainContainer" unique_id=523810863 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -20)
+col = 10
+row = 7
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_8" parent="TerrainContainer" unique_id=932399754 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -19)
+col = 10
+row = 8
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_9" parent="TerrainContainer" unique_id=1708734001 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -18)
+col = 10
+row = 9
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_10" parent="TerrainContainer" unique_id=904837908 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -17)
+col = 10
+row = 10
+height = 5
+layers = ["stone_floor", "stone_floor", "stone_floor", "stone_floor", "stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_11" parent="TerrainContainer" unique_id=1374467382 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -16)
+col = 10
+row = 11
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_12" parent="TerrainContainer" unique_id=809057385 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -15)
+col = 10
+row = 12
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_13" parent="TerrainContainer" unique_id=1832044148 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -14)
+col = 10
+row = 13
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_14" parent="TerrainContainer" unique_id=1562282886 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -13)
+col = 10
+row = 14
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_15" parent="TerrainContainer" unique_id=481498684 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -12)
+col = 10
+row = 15
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_10_16" parent="TerrainContainer" unique_id=62654587 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.5, 0, -11)
+col = 10
+row = 16
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_3" parent="TerrainContainer" unique_id=1165612781 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -24)
+col = 11
+row = 3
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_4" parent="TerrainContainer" unique_id=33407653 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -23)
+col = 11
+row = 4
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_5" parent="TerrainContainer" unique_id=56626300 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -22)
+col = 11
+row = 5
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_6" parent="TerrainContainer" unique_id=982411996 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -21)
+col = 11
+row = 6
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_7" parent="TerrainContainer" unique_id=6273011 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -20)
+col = 11
+row = 7
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_8" parent="TerrainContainer" unique_id=1064340757 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -19)
+col = 11
+row = 8
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_9" parent="TerrainContainer" unique_id=835123456 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -18)
+col = 11
+row = 9
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_10" parent="TerrainContainer" unique_id=1396005217 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -17)
+col = 11
+row = 10
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_11" parent="TerrainContainer" unique_id=1677021284 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -16)
+col = 11
+row = 11
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_12" parent="TerrainContainer" unique_id=2088122361 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -15)
+col = 11
+row = 12
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_13" parent="TerrainContainer" unique_id=1677465890 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -14)
+col = 11
+row = 13
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_14" parent="TerrainContainer" unique_id=1215578802 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -13)
+col = 11
+row = 14
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_15" parent="TerrainContainer" unique_id=78688662 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -12)
+col = 11
+row = 15
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_16" parent="TerrainContainer" unique_id=2079673949 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -11)
+col = 11
+row = 16
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_11_17" parent="TerrainContainer" unique_id=1992328774 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0, -10)
+col = 11
+row = 17
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_12_4" parent="TerrainContainer" unique_id=1184589191 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0, -23)
+col = 12
+row = 4
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_12_5" parent="TerrainContainer" unique_id=147795470 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0, -22)
+col = 12
+row = 5
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_12_6" parent="TerrainContainer" unique_id=335093905 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0, -21)
+col = 12
+row = 6
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_12_7" parent="TerrainContainer" unique_id=1893291895 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0, -20)
+col = 12
+row = 7
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_12_8" parent="TerrainContainer" unique_id=1609966283 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0, -19)
+col = 12
+row = 8
+height = 5
+layers = ["stone_floor", "stone_floor", "stone_floor", "stone_floor", "stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_12_9" parent="TerrainContainer" unique_id=2075399 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0, -18)
+col = 12
+row = 9
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_12_10" parent="TerrainContainer" unique_id=40823001 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0, -17)
+col = 12
+row = 10
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "stone_floor", "stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_12_11" parent="TerrainContainer" unique_id=1746961170 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0, -16)
+col = 12
+row = 11
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_12_12" parent="TerrainContainer" unique_id=1700149907 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0, -15)
+col = 12
+row = 12
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_12_13" parent="TerrainContainer" unique_id=1493995982 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0, -14)
+col = 12
+row = 13
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_12_14" parent="TerrainContainer" unique_id=1754153545 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0, -13)
+col = 12
+row = 14
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_12_15" parent="TerrainContainer" unique_id=415696853 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0, -12)
+col = 12
+row = 15
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_12_18" parent="TerrainContainer" unique_id=440383608 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0, -9)
+col = 12
+row = 18
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_13_4" parent="TerrainContainer" unique_id=458123403 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0, -23)
+col = 13
+row = 4
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_13_5" parent="TerrainContainer" unique_id=337780106 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0, -22)
+col = 13
+row = 5
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_13_6" parent="TerrainContainer" unique_id=2120246527 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0, -21)
+col = 13
+row = 6
+height = 6
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_13_7" parent="TerrainContainer" unique_id=1802057878 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0, -20)
+col = 13
+row = 7
+height = 6
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_13_8" parent="TerrainContainer" unique_id=1762051943 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0, -19)
+col = 13
+row = 8
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_13_9" parent="TerrainContainer" unique_id=1449231953 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0, -18)
+col = 13
+row = 9
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_13_10" parent="TerrainContainer" unique_id=291339259 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0, -17)
+col = 13
+row = 10
+height = 3
+layers = ["stone_floor", "stone_floor", "stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_13_11" parent="TerrainContainer" unique_id=1448298481 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0, -16)
+col = 13
+row = 11
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_13_12" parent="TerrainContainer" unique_id=999228303 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0, -15)
+col = 13
+row = 12
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_13_14" parent="TerrainContainer" unique_id=932628121 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0, -13)
+col = 13
+row = 14
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_13_15" parent="TerrainContainer" unique_id=2019177823 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0, -12)
+col = 13
+row = 15
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_13_16" parent="TerrainContainer" unique_id=1635664030 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0, -11)
+col = 13
+row = 16
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_13_17" parent="TerrainContainer" unique_id=116314353 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2283516, 3.701027, -6.9832497)
+col = 13
+row = 17
+height = 4
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_13_19" parent="TerrainContainer" unique_id=1731203733 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 0, -8)
+col = 13
+row = 19
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_14_4" parent="TerrainContainer" unique_id=232779001 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 0, -23)
+col = 14
+row = 4
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_14_7" parent="TerrainContainer" unique_id=389987449 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 0, -20)
+col = 14
+row = 7
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_14_8" parent="TerrainContainer" unique_id=859612401 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 0, -19)
+col = 14
+row = 8
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_14_9" parent="TerrainContainer" unique_id=559986139 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 0, -18)
+col = 14
+row = 9
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_14_10" parent="TerrainContainer" unique_id=1107285218 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 0, -17)
+col = 14
+row = 10
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_14_11" parent="TerrainContainer" unique_id=289990708 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 0, -16)
+col = 14
+row = 11
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_14_18" parent="TerrainContainer" unique_id=318400613 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 0, -9)
+col = 14
+row = 18
+height = 5
+layers = ["stone_floor", "stone_floor", "stone_floor", "stone_floor", "stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_14_19" parent="TerrainContainer" unique_id=1306123024 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 0, -8)
+col = 14
+row = 19
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_14_20" parent="TerrainContainer" unique_id=2098850823 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 0, -7)
+col = 14
+row = 20
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_15_7" parent="TerrainContainer" unique_id=1021549566 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0, -20)
+col = 15
+row = 7
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_15_8" parent="TerrainContainer" unique_id=1127326830 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0, -19)
+col = 15
+row = 8
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_15_9" parent="TerrainContainer" unique_id=1048518920 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0, -18)
+col = 15
+row = 9
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_15_10" parent="TerrainContainer" unique_id=140233577 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0, -17)
+col = 15
+row = 10
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_15_11" parent="TerrainContainer" unique_id=83524299 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0, -16)
+col = 15
+row = 11
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_16_7" parent="TerrainContainer" unique_id=277286912 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.5, 0, -20)
+col = 16
+row = 7
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_16_8" parent="TerrainContainer" unique_id=529767453 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.5, 0, -19)
+col = 16
+row = 8
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_16_9" parent="TerrainContainer" unique_id=558025528 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.5, 0, -18)
+col = 16
+row = 9
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_16_10" parent="TerrainContainer" unique_id=576098198 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.5, 0, -17)
+col = 16
+row = 10
+height = 5
+layers = ["stone_floor", "__AIR__", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_16_11" parent="TerrainContainer" unique_id=308986225 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.5, 0, -16)
+col = 16
+row = 11
+height = 5
+layers = ["stone_floor", "stone_floor", "__AIR__", "__AIR__", "__AIR__", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_17_6" parent="TerrainContainer" unique_id=275540817 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 0, -21)
+col = 17
+row = 6
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_17_7" parent="TerrainContainer" unique_id=198935422 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 0, -20)
+col = 17
+row = 7
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_17_8" parent="TerrainContainer" unique_id=1359233117 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 0, -19)
+col = 17
+row = 8
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_17_9" parent="TerrainContainer" unique_id=854056978 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 0, -18)
+col = 17
+row = 9
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_17_10" parent="TerrainContainer" unique_id=761822690 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 0, -17)
+col = 17
+row = 10
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_17_11" parent="TerrainContainer" unique_id=2124517323 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 0, -16)
+col = 17
+row = 11
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_18_8" parent="TerrainContainer" unique_id=1218753737 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 0, -19)
+col = 18
+row = 8
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_20_10" parent="TerrainContainer" unique_id=1776329155 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.5, 0, -17)
+col = 20
+row = 10
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_22_12" parent="TerrainContainer" unique_id=576534184 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 0, -15)
+col = 22
+row = 12
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_24_15" parent="TerrainContainer" unique_id=263284467 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, -12)
+col = 24
+row = 15
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_25_16" parent="TerrainContainer" unique_id=1841474569 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 0, -11)
+col = 25
+row = 16
+height = 2
+layers = ["stone_floor", "stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_29_33" parent="TerrainContainer" unique_id=972286245 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 0, 6)
+col = 29
+row = 33
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_30_33" parent="TerrainContainer" unique_id=1562971000 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 6)
+col = 30
+row = 33
+height = 2
+layers = ["stone_floor", "stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_30_34" parent="TerrainContainer" unique_id=1810240820 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 7)
+col = 30
+row = 34
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_31_33" parent="TerrainContainer" unique_id=135388125 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0, 6)
+col = 31
+row = 33
+height = 1
+layers = ["stone_floor", "stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="Cube_31_34" parent="TerrainContainer" unique_id=1967680131 instance=ExtResource("4_04wev")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0, 7)
+col = 31
+row = 34
+layers = ["stone_floor"]
+light_color = Color(0.8784314, 0.83137256, 0.7411765, 1)
+dark_color = Color(0.5176471, 0.45882353, 0.3764706, 1)
+
+[node name="UnitContainer" type="Node3D" parent="." unique_id=356235924]
+
+[node name="Unit_knight_1" parent="UnitContainer" unique_id=132944546 instance=ExtResource("6_4yfpn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 2.01, -24)
+spawn_id = "knight_1"
+character_id = "knight"
+col = 2
+row = 3
+texture_path = "res://assets/units/knight.png"
+
+[node name="Unit_vip_student" parent="UnitContainer" unique_id=1178038038 instance=ExtResource("6_4yfpn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.5, 1.01, -24)
+spawn_id = "vip_student"
+character_id = "vip_student"
+col = 4
+row = 3
+team = "neutral"
+texture_path = "res://assets/units/student.png"
+
+[node name="Unit_slime_1" parent="UnitContainer" unique_id=1136080567 instance=ExtResource("6_4yfpn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.5, 1.01, -21)
+spawn_id = "slime_1"
+character_id = "slime"
+col = 7
+row = 6
+team = "enemy"
+texture_path = "res://assets/units/goblin.png"

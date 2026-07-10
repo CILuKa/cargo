@@ -198,18 +198,14 @@ func settle_velocity(unit: TacticsUnit) -> void:
 		#    注意：_update_air_height 可能将 is_airborne 设为 false（air_height 归零时）
 		_update_air_height(unit)
 
-		# 3. 同步视觉位置到新的 air_height（关键：自由落体单位不滑动，必须在此更新位置）
-		#    否则单位视觉上永远停留在原始高度，即使 air_height 已减小
-		if unit.physics.is_airborne:
-			unit.position = _ctx.grid_to_world_top(unit.grid_pos.x, unit.grid_pos.y, unit.physics.air_height)
-		else:
-			# _update_air_height 已归零落地，落回地面
-			unit.position = _ctx.grid_to_world_top(unit.grid_pos.x, unit.grid_pos.y)
+		# 3. 同步视觉位置到新的 air_height
+		_align_unit_position(unit)
 
 	var mag: float = unit.physics.velocity.length()
 	if mag < 0.01:
 		# 没有速度，检查落地状态
 		_check_landing(unit)
+		_align_unit_position(unit)
 		return
 
 	# ---- 阶段2：方向匹配 ----
@@ -219,6 +215,7 @@ func settle_velocity(unit: TacticsUnit) -> void:
 	if slide_vel.length() < 0.01:
 		# 无有效水平速度，检查落地状态
 		_check_landing(unit)
+		_align_unit_position(unit)
 		return
 
 	var v_dir: Vector2 = slide_vel.normalized()
@@ -234,6 +231,7 @@ func settle_velocity(unit: TacticsUnit) -> void:
 		# 幅度太小（< 1格），不滑动，直接衰减
 		_apply_velocity_decay(unit, v_dir, projected_length)
 		_check_landing(unit)
+		_align_unit_position(unit)
 		return
 
 	_log("矢量速度结算: unit=%s 幅度=%.2f 滑动=%d 方向=%s 空中=%s velocity=(%.2f, %.2f) air_height=%.2f" % [
@@ -251,6 +249,7 @@ func settle_velocity(unit: TacticsUnit) -> void:
 			# 撞墙：检查是否可以跃过（边界外视为高度=-∞）
 			# 无法跃过边界，传递动量，清除碰撞方向速度
 			_handle_horizontal_collision(unit, best_dir, next_pos, "terrain", 0)
+			_align_unit_position(unit)
 			return
 
 		# 4b. 单位碰撞 → 检查是否可穿过（可通过地形）或跃过
@@ -276,6 +275,7 @@ func settle_velocity(unit: TacticsUnit) -> void:
 				else:
 					# 无法跃过，撞单位：传递动量，清除碰撞方向速度
 					_handle_horizontal_collision(unit, best_dir, next_pos, "unit", 0, blocker)
+					_align_unit_position(unit)
 					return
 
 		# 4c. 高度差碰撞（地形）
@@ -294,6 +294,7 @@ func settle_velocity(unit: TacticsUnit) -> void:
 				# 无法跃过，碰撞伤害 + 传递动量 + 清除碰撞方向速度
 				_log("碰撞(上坡): unit=%s diff=%d" % [unit.unit_id, height_diff])
 				_handle_horizontal_collision(unit, best_dir, next_pos, "terrain", 0)
+				_align_unit_position(unit)
 				return
 
 		if height_diff < 0:
@@ -305,8 +306,8 @@ func settle_velocity(unit: TacticsUnit) -> void:
 			unit.physics.air_height = float(drop)
 			unit.physics.fall_height = float(drop)
 			unit.physics.is_airborne = true
-			unit.position = _ctx.grid_to_world_top(next_pos.x, next_pos.y, float(drop))
 			_ctx.update_unit_data(unit.unit_id, next_pos.x, next_pos.y)
+			_align_unit_position(unit)
 			_log("坠落: unit=%s 下落=%d格 进入自由落体 air_height=%.2f" % [
 				unit.unit_id, drop, unit.physics.air_height
 			])
@@ -319,9 +320,8 @@ func settle_velocity(unit: TacticsUnit) -> void:
 
 		# 4d. 移动单位到新格子（考虑空中高度）
 		unit.set_grid_pos(next_pos.x, next_pos.y)
-		# 计算实际视觉位置：地面高度 + air_height
-		unit.position = _ctx.grid_to_world_top(next_pos.x, next_pos.y, unit.physics.air_height)
 		_ctx.update_unit_data(unit.unit_id, next_pos.x, next_pos.y)
+		_align_unit_position(unit)
 
 	# ---- 阶段5：速度衰减 ----
 	# 先衰减再检查落地，确保衰减时使用正确的空中/地面状态
@@ -332,6 +332,33 @@ func settle_velocity(unit: TacticsUnit) -> void:
 	# ---- 阶段6：检查落地状态 ----
 	# 仅当 air_height 自然归零时落地，不会强制空中单位落地
 	_check_landing(unit)
+
+	# ---- 阶段7：位置校准 ----
+	# 确保所有物理结算后位置严格对齐到格子（消除浮点偏移）
+	_align_unit_position(unit)
+
+
+# =============================================================================
+# 位置校准
+# =============================================================================
+
+## 将单位的视觉位置严格对齐到其 grid_pos 对应的格子
+## 地面单位：Y 对齐到格子顶部（air_height = 0）
+## 空中单位：Y 对齐到格子顶部 + air_height（按 TILE_SIZE 对齐到整数层）
+## X/Z 严格按 grid_pos 计算，消除任何浮点偏移
+func _align_unit_position(unit: TacticsUnit) -> void:
+	# 落地后强制清除残余的微小 air_height
+	if not unit.physics.is_airborne and unit.physics.air_height < 1.0:
+		unit.physics.air_height = 0.0
+		unit.physics.vertical_velocity = 0.0
+
+	# 空中单位：air_height 按 TILE_SIZE 对齐到整数层高度
+	# 地面单位：air_height = 0
+	var aligned_air_height: float = 0.0
+	if unit.physics.is_airborne:
+		aligned_air_height = unit.physics.air_height
+
+	unit.position = _ctx.grid_to_world_top(unit.grid_pos.x, unit.grid_pos.y, aligned_air_height)
 
 
 # =============================================================================
@@ -708,6 +735,8 @@ func _resolve_terrain_collision(unit: TacticsUnit, hit_pos: Vector2i, _hit_mag: 
 ##   - add_velocity：直接加固定速度（旧版）
 ##   - apply_momentum：通过冲量施加（新版，v = impulse / mass）
 ##
+## 速度增加后立即结算一次矢量速度（滑动+碰撞+衰减）
+##
 ## @param target: 被推击的目标单位
 ## @param center: 目标当前所在格子
 ## @param col: 玩家选择的方向格子 col
@@ -739,6 +768,11 @@ func apply_velocity_direction(target: TacticsUnit, center: Vector2i, col: int, r
 					target.unit_id, velocity_dir, impulse, target.physics.mass, target.physics.velocity
 				])
 
+	# 速度增加后立即结算一次
+	if target.physics.velocity.length() >= 0.01:
+		_log("推击后立即结算: 目标=%s" % target.unit_id)
+		settle_velocity(target)
+
 
 ## 应用投掷技能的3D方向（由方向选择UI触发）
 ## 26个方向（立体），分解到水平和垂直分量
@@ -766,18 +800,20 @@ func apply_velocity_direction_3d(target: TacticsUnit, center: Vector3i, directio
 	else:
 		target.physics.vertical_velocity += vertical_impulse
 
-	# 如果有垂直分量，设置空中状态
-	if direction_3d.z != 0:
+	# 如果有垂直分量或单位已在空中，设置空中状态
+	if direction_3d.z != 0 or target.physics.is_airborne:
 		target.physics.is_airborne = true
-		if direction_3d.z > 0:
-			# 向上投掷：vertical_velocity < 0（向上），air_height 将在 _update_air_height 中增加
-			# 确保有初始离地高度，以便空中状态正确生效
-			if target.physics.air_height <= 0.0:
-				target.physics.air_height = 0.01  # 极小值，仅标记离地，实际上升由 vertical_velocity 驱动
-		elif direction_3d.z < 0:
-			# 向下投掷：vertical_velocity > 0（向下），air_height 将减小
-			if target.physics.air_height <= 0.0:
-				target.physics.air_height = 0.01
+		if target.physics.air_height <= 0.0 and direction_3d.z > 0:
+			# 单位在地面上被向上投掷，给予初始离地高度
+			# 使用垂直冲量大小作为初始 air_height，确保重力下落多回合后才落地
+			var initial_height := absf(vertical_impulse / maxf(target.physics.mass, 1.0))
+			target.physics.air_height = maxf(0.01, initial_height)
+			_log("投掷初始air_height: 目标=%s air_height=%.2f" % [target.unit_id, target.physics.air_height])
+		elif target.physics.air_height <= 0.0 and direction_3d.z < 0:
+			# 单位在地面上被向下投掷 — 已经在地面，向下力不产生空中状态
+			# 清除刚设置的空中标记，垂直速度也无效（被地面法向力抵消）
+			target.physics.is_airborne = false
+			target.physics.vertical_velocity = 0.0
 
 	_log("投掷(apply_velocity_direction_3d): 目标=%s 方向=%s 冲量=%.1f 水平速度=%s 垂直速度=%.2f 空中=%s" % [
 		target.unit_id, direction_3d, impulse,
@@ -785,6 +821,11 @@ func apply_velocity_direction_3d(target: TacticsUnit, center: Vector3i, directio
 		target.physics.vertical_velocity,
 		target.physics.is_airborne
 	])
+
+	# 投掷后立即结算一次矢量速度（滑动+碰撞+重力+衰减）
+	if target.physics.velocity.length() >= 0.01 or target.physics.is_airborne:
+		_log("投掷后立即结算: 目标=%s" % target.unit_id)
+		settle_velocity(target)
 
 
 ## 将任意方向向量 snaps 到最近的8方向之一

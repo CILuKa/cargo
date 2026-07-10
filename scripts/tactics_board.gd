@@ -1060,7 +1060,7 @@ func load_battle_config(config_path: String) -> void:
 	_debug_viewport_count = 0
 	print("[TacticsBoard] load_battle_config: ", config_path)
 
-	# 读取 JSON 文件
+	# 从 JSON 加载战斗配置
 	var file := FileAccess.open(config_path, FileAccess.READ)
 	if file == null:
 		push_error("TacticsBoard: 无法加载战斗配置: " + config_path)
@@ -1074,6 +1074,7 @@ func load_battle_config(config_path: String) -> void:
 		return
 
 	_battle_config = json.data
+	print("[TacticsBoard] 从 JSON 加载: ", config_path)
 
 	# 解析网格尺寸（支持自定义大小）
 	_grid_cols = _battle_config.get("grid_cols", 10)
@@ -1106,6 +1107,94 @@ func load_battle_config(config_path: String) -> void:
 	_apply_tile_colors()       # 1. 格子颜色
 	_place_battle_units()      # 2. 放置单位
 	# _apply_battle_background()  # 3. 背景（待实现，需要 WorldEnvironment 节点）
+
+
+## 从 BattleScene 场景加载战斗配置
+## @param config_path: 战斗场景路径，如 "res://scenes/battles/battle_001.tscn"
+func load_from_battle_scene(config_path: String) -> void:
+	# 重置调试计数器
+	_debug_input_count = 0
+	_debug_viewport_count = 0
+	print("[TacticsBoard] load_from_battle_scene: ", config_path)
+
+	# 加载 BattleScene 场景
+	var scene_resource := load(config_path) as PackedScene
+	if scene_resource == null:
+		push_error("TacticsBoard: 无法加载战斗场景: " + config_path)
+		return
+
+	var battle_scene := scene_resource.instantiate() as BattleScene
+	if battle_scene == null:
+		push_error("TacticsBoard: 场景根节点不是 BattleScene: " + config_path)
+		return
+
+	# 从 BattleScene 导出属性生成配置字典
+	_battle_config = battle_scene.to_battle_config()
+	print("[TacticsBoard] 从场景加载: battle_id=%s" % battle_scene.battle_id)
+
+	# 解析网格尺寸
+	_grid_cols = battle_scene.grid_cols
+	_grid_rows = battle_scene.grid_rows
+
+	# 加载地形配置
+	var terrain_path: String = battle_scene.get_terrain_config_path()
+	if not terrain_path.is_empty():
+		_terrain_config = _load_terrain_config(terrain_path)
+	else:
+		# 尝试自动推断地形文件路径
+		var auto_terrain: String = config_path.get_base_dir().replace("scenes/battles", "data/battles") + "/battle_terrain_" + battle_scene.battle_id.replace("battle_", "") + ".json"
+		if FileAccess.file_exists(auto_terrain):
+			_terrain_config = _load_terrain_config(auto_terrain)
+		else:
+			_terrain_config = {}
+			push_warning("TacticsBoard: 未找到地形配置: battle_id=%s" % battle_scene.battle_id)
+
+	# 解析排除格子
+	_excluded_tiles.clear()
+	var terrain_cfg: Dictionary = _terrain_config.get("terrain_config", {})
+	var excluded: Array = terrain_cfg.get("excluded_tiles", [])
+	for entry in excluded:
+		_excluded_tiles[Vector2i(entry.get("col", -1), entry.get("row", -1))] = true
+
+	# 解析胜负条件（从 ConditionResource 转换为字典列表）
+	_win_conditions = []
+	for cond in battle_scene.win_conditions:
+		_win_conditions.append(cond.to_condition_dict())
+	_lose_conditions = []
+	for cond in battle_scene.lose_conditions:
+		_lose_conditions.append(cond.to_condition_dict())
+
+	# 设置相机位置
+	_battle_config["camera_look_at"] = {
+		"col": battle_scene.camera_look_at_col,
+		"row": battle_scene.camera_look_at_row,
+		"height": battle_scene.camera_look_at_height
+	}
+
+	# 进入全屏战斗模式
+	_enter_fullscreen()
+
+	# 重新生成棋盘（含地形）
+	_clear_children()
+	_create_base_platform()
+	_create_tiles()
+	_setup_camera()
+
+	# 逐步应用配置
+	_apply_tile_colors()       # 1. 格子颜色
+	_place_battle_units()      # 2. 放置单位
+
+	# 清理临时实例
+	battle_scene.queue_free()
+
+
+## 通用战斗加载入口 — 自动检测 .tscn 或 .json 格式
+## @param config_path: 战斗配置路径（.tscn 场景 或 .json 文件）
+func load_battle(config_path: String) -> void:
+	if config_path.ends_with(".tscn"):
+		load_from_battle_scene(config_path)
+	else:
+		load_battle_config(config_path)
 
 
 ## 应用战斗配置中的格子颜色（根据地型类型着色）
@@ -1169,9 +1258,9 @@ func _place_battle_units() -> void:
 		var team: String = unit.get("team", "neutral")
 		var character_id: String = unit.get("character_id", "")
 
-		# 从 CharacterRoster 获取角色数据
-		var char_data := CharacterRoster.get_character(character_id)
-		if char_data.is_empty():
+		# 从 CharacterRoster 获取角色 Resource
+		var char_res := CharacterRoster.get_character_resource(character_id)
+		if char_res == null:
 			push_error("TacticsBoard: 未找到角色数据: " + character_id + " (unit: " + unit_id + ")")
 			continue
 
@@ -1181,24 +1270,8 @@ func _place_battle_units() -> void:
 		unit_node.unit_id = unit_id
 		unit_node.team = team
 
-		# 从 CharacterRoster 覆盖属性
-		unit_node.unit_name = char_data.get("name", unit_id)
-		unit_node.max_hp = char_data.get("hp", 10)
-		unit_node.current_hp = unit_node.max_hp
-		unit_node.mental_speed = char_data.get("mental_speed", 10)
-		unit_node.move_speed = char_data.get("move_speed", 3)
-		unit_node.atk = char_data.get("atk", 5)
-		unit_node.def = char_data.get("def", 2)
-		unit_node.matk = char_data.get("matk", 3)
-		unit_node.mdef = char_data.get("mdef", 2)
-		unit_node.physics.mass = char_data.get("mass", 1.0)
-
-		# 技能：使用当前装备的技能
-		var equipped_skill: String = char_data.get("equipped_skill", "")
-		if not equipped_skill.is_empty():
-			unit_node.skill_ids = [equipped_skill]
-		else:
-			unit_node.skill_ids.clear()
+		# 通过 Resource 统一应用属性（含子脚本差异化初始化）
+		char_res.apply_to_unit(unit_node)
 		unit_node.skill_system = _skill_system
 
 		# 设置网格位置
@@ -1236,14 +1309,14 @@ func _place_battle_units() -> void:
 		# 连接死亡信号
 		unit_node.died.connect(_on_battle_unit_died)
 
-		# 存储单位数据（保留 properties 用于兼容性，但实际战斗数据从 TacticsUnit 读取）
+		# 存储单位数据（properties 从 Resource 导出，实际战斗数据从 TacticsUnit 读取）
 		_unit_data[unit_id] = {
 			"team": team,
 			"col": col,
 			"row": row,
 			"height": unit_height,
 			"character_id": character_id,
-			"properties": char_data.duplicate(true),
+			"properties": char_res.to_dict(),
 			"node": unit_node,
 			"alive": true
 		}
@@ -1386,6 +1459,7 @@ func _check_conditions() -> Dictionary:
 		if _check_single_condition(wc):
 			return {"type": "win", "branch": wc.get("id", ""), "next": wc.get("next", "")}
 
+	# 无条件满足
 	return {}
 
 
@@ -2043,7 +2117,7 @@ func _deselect_unit() -> void:
 	_close_action_menu()
 	_selected_unit = null
 	_combat_state = CombatState.IDLE
-	_clear_move_range()
+	_force_clear_all_wireframes()
 	_highlight_type = ""
 
 
@@ -2128,6 +2202,34 @@ func _clear_move_range() -> void:
 	_move_range_cubes.clear()
 	_move_range.clear()
 	_hovered_wireframe_idx = -1  # 重置悬浮索引
+
+
+## 强制清除所有残留线框（包括 _move_range_cubes 列表之外的孤儿线框）
+## 扫描 tile_container 中所有以线框前缀命名的节点并删除
+func _force_clear_all_wireframes() -> void:
+	# 先执行正常清除
+	_clear_move_range()
+
+	# 扫描 tile_container 中残留的线框节点
+	if tile_container == null:
+		return
+	var to_remove: Array = []
+	for child in tile_container.get_children():
+		var name: String = child.name
+		if name.begins_with("ThrowTarget_") or name.begins_with("ThrowDir_") or \
+		   name.begins_with("Interact_") or name.begins_with("Direction_"):
+			to_remove.append(child)
+		elif child is MeshInstance3D and child != _selected_unit:
+			# 移动范围高亮方块（半透明薄片）
+			var mesh_inst: MeshInstance3D = child
+			if mesh_inst.mesh is BoxMesh:
+				var box: BoxMesh = mesh_inst.mesh
+				# 移动范围方块特征：非常薄（Y < 0.1）
+				if box.size.y < 0.1:
+					to_remove.append(child)
+	for node in to_remove:
+		tile_container.remove_child(node)
+		node.queue_free()
 
 
 ## 创建移动范围高亮立方体
@@ -3079,6 +3181,9 @@ func _apply_velocity_direction(col: int, row: int) -> void:
 			skill_data
 		)
 
+	# 推击执行后强制清除所有残留线框
+	_force_clear_all_wireframes()
+
 	_direction_target = null
 	_pending_skill_id = ""
 	_selected_unit.has_acted = true
@@ -3151,7 +3256,7 @@ func _on_battle_turn_started(unit: TacticsUnit) -> void:
 
 ## 回合结束
 func _on_battle_turn_ended(unit: TacticsUnit) -> void:
-	pass
+	_force_clear_all_wireframes()
 
 
 ## 所有行动结束
@@ -3196,9 +3301,9 @@ func _on_battle_unit_died(unit: TacticsUnit) -> void:
 
 ## 战斗结果处理
 func _on_battle_conclusion(result: Dictionary) -> void:
-	# 获取对应分支的 next
+	# 获取对应分支的 next（支持 string 或 {file, node} 字典格式）
 	var branch_id: String = result.get("branch", "")
-	var next_target = ""
+	var next_target: Variant = ""
 
 	# 查找对应条件
 	var conditions: Array
@@ -3734,6 +3839,9 @@ func _apply_throw_direction(direction: Vector3i) -> void:
 			_throw_target_pos.x, _throw_target_pos.y, _throw_target_pos.z
 		])
 		_selected_unit.remaining_move_points -= 2
+
+	# 投掷执行后再次强制清除所有残留线框（立即结算可能产生新线框）
+	_force_clear_all_wireframes()
 
 	# 投掷完成后，重置状态
 	_throw_target_pos = Vector3i(-1, -1, -1)

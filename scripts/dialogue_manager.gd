@@ -284,7 +284,8 @@ func jump_to_node(node_id: String, file_path: String = ""):
 # =============================================================================
 
 ## 战斗结束后由 GameScreen 调用，根据结果跳转到对应剧情分支
-## @param result: 结构化结果字典 {"type": "win"|"lose", "branch": "分支ID", "next": "目标节点"}
+## @param result: 结构化结果字典 {"type": "win"|"lose", "branch": "分支ID", "next": 目标}
+##                next 支持两种格式：string（同文件节点ID）或 {file, node}（跨文件引用）
 ##                或兼容旧版字符串 "win" / "lose"
 func resolve_battle_result(result: Variant) -> void:
 	# 清除等待标志
@@ -292,21 +293,24 @@ func resolve_battle_result(result: Variant) -> void:
 
 	# 兼容旧版字符串参数
 	var outcome_type: String
-	var next_id: String
+	var next_target: Variant
 	if result is String:
 		outcome_type = result
-		next_id = ""
+		next_target = ""
 	elif result is Dictionary:
 		outcome_type = result.get("type", "")
-		next_id = result.get("next", "")
+		next_target = result.get("next", "")
 	else:
 		push_error("DialogueManager: 无效的战斗结果类型")
 		dialogue_ended.emit()
 		return
 
 	# 如果结构化结果中已包含 next，直接使用
-	if not next_id.is_empty():
-		_advance_to_target(next_id)
+	if next_target is String and not next_target.is_empty():
+		_advance_to_target(next_target)
+		return
+	elif next_target is Dictionary:
+		_advance_to_target(next_target)
 		return
 
 	# 回退到旧逻辑：从当前节点的 battle 效果中查找分支
@@ -319,14 +323,23 @@ func resolve_battle_result(result: Variant) -> void:
 	for effect in effects:
 		if effect.get("type") == "battle":
 			if outcome_type == "win":
-				next_id = effect.get("win_next", "")
+				next_target = effect.get("win_next", "")
 			else:
-				next_id = effect.get("lose_next", "")
+				next_target = effect.get("lose_next", "")
 			break
 
-	if next_id.is_empty() or next_id == "":
+	# 判断 next_target 是否为空（支持 string 和 dict 两种格式）
+	var is_empty: bool = false
+	if next_target is String:
+		is_empty = next_target.is_empty()
+	elif next_target is Dictionary:
+		is_empty = next_target.get("node", "").is_empty()
+	else:
+		is_empty = true
+
+	if is_empty:
 		dialogue_ended.emit()
 		return
 
 	# win_next / lose_next 也支持 string 或 {file, node}
-	_advance_to_target(next_id)
+	_advance_to_target(next_target)

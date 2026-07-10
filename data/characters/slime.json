@@ -1,0 +1,18 @@
+{
+  "character_id": "slime",
+  "type": "slime",
+  "name": "史莱姆",
+  "hp": 15,
+  "atk": 5,
+  "def": 2,
+  "matk": 1,
+  "mdef": 1,
+  "mental_speed": 10,
+  "move_speed": 2,
+  "mass": 1.0,
+  "available_skills": ["basic_attack"],
+  "equipped_skill": "basic_attack",
+  "split_on_death": false,
+  "split_count": 2,
+  "absorbs_elements": []
+}

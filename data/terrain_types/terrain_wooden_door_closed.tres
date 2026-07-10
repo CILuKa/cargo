@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TerrainType" format=3 uid="uid://0gu05kg2np8x"]
+
+[ext_resource type="Script" uid="uid://dhbjt4ytguuru" path="res://data/terrain_types/terrain_type.gd" id="1_dav72"]
+
+[resource]
+script = ExtResource("1_dav72")
+terrain_type_id = "wooden_door_closed"
+display_name = "关闭的木门"
+usage_type = 2
+material_type = 1
+mass = 50.0
+custom_max_health = 1000
+is_attackable = true
+is_interactive = true
+transform_to_id = "wooden_door_open"
+is_passable = false
+texture_paths = Array[String](["res://textures/terrain/wooden_door/right.png", "res://textures/terrain/wooden_door/left.png", "res://textures/terrain/wooden_door/top.png", "res://textures/terrain/wooden_door/bottom.png", "res://textures/terrain/wooden_door_closed/front.png", "res://textures/terrain/wooden_door/back.png"])
+base_height = 1

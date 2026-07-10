@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SlimeResource" format=3 uid="uid://djd4dh8akpsna"]
+
+[ext_resource type="Script" uid="uid://crnrmjujh7j16" path="res://data/characters/slime_resource.gd" id="1_wxwfd"]
+
+[resource]
+script = ExtResource("1_wxwfd")
+character_id = "slime"
+unit_name = "史莱姆"
+max_hp = 15
+atk = 5
+def = 2
+matk = 1
+mdef = 1
+move_speed = 2
+available_skills = Array[String](["basic_attack"])
+equipped_skill = "basic_attack"
+behavior_script_path = "res://data/characters/slime_behavior.gd"
