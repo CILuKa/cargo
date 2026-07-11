@@ -42,10 +42,8 @@ var current_hp: int = 100
 ## 移动速度 — 基础速度属性，实际每回合移动点数 = speed / (gravity * friction)
 @export var move_speed: int = 3
 
-## 计算本回合实际移动点数（空中时禁止移动，返回 0）
+## 计算本回合实际移动点数（空中单位保留移动点数用于其他用途，但不允许移动）
 func get_move_points(tile_friction: float) -> int:
-	if physics.is_airborne:
-		return 0
 	var denom: float = physics.gravity * tile_friction
 	if denom <= 0.0:
 		return 0

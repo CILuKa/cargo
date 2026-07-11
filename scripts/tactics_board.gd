@@ -775,18 +775,15 @@ func _grid_to_world(col: int, row: int) -> Vector3:
 func _grid_to_world_top(col: int, row: int, override_height: int = -1, air_height_offset: float = 0.0) -> Vector3:
 	var pos := _grid_to_world(col, row)
 	var height: int = override_height
-	var is_passable: bool = false
 	if height < 0:
 		var key := Vector2i(col, row)
 		var terrain: Dictionary = _terrain_data.get(key, {"height": 0, "type": "flat"})
 		height = terrain.get("height", 0)
-	is_passable = _is_tile_passable(col, row)
 
 	# 计算实际Y坐标
-	# 可通过地形：单位站在内部（地面层），Y = TILE_SIZE * height
-	# 不可通过地形：单位站在上表面，Y = TILE_SIZE * (height + 1)
+	# 单位始终站在地形表面：Y = TILE_SIZE * (height + 1)
 	# 空中偏移：air_height_offset（世界坐标高度）
-	var surface_y: float = TILE_SIZE * float(height) if is_passable else TILE_SIZE * (height + 1)
+	var surface_y: float = TILE_SIZE * float(height + 1)
 	pos.y = surface_y + air_height_offset + 0.01
 	return pos
 
@@ -1591,21 +1588,27 @@ func _on_left_click(event: InputEventMouseButton) -> void:
 	# 3D线框选取模式：使用AABB检测，不受2D格子限制
 	# 这些模式在2D射线下可能返回(-1,-1)（如点击空中线框），
 	# 必须在2D检测之前单独处理
-	# 注意：3D检测失败时不自动取消模式，让用户可以继续尝试选取
+	# 点击空白区域（3D检测失败）时取消当前模式
 	if _combat_state == CombatState.THROW_TARGET_MODE:
 		var throw_target := _get_throw_target_3d(global_mouse)
 		if throw_target != Vector3i(-1, -1, -1):
 			_on_throw_target_selected(throw_target)
+		else:
+			_cancel_throw_mode()
 		return
 	if _combat_state == CombatState.THROW_DIRECTION_MODE:
 		var throw_dir := _get_throw_direction_3d(global_mouse)
 		if throw_dir != Vector3i(-1, -1, -1):
 			_apply_throw_direction(throw_dir)
+		else:
+			_cancel_throw_direction_mode()
 		return
 	if _combat_state == CombatState.INTERACT_MODE:
 		var inter_3d := _get_throw_target_3d(global_mouse)
 		if inter_3d != Vector3i(-1, -1, -1):
 			_execute_interact(inter_3d.x, inter_3d.y)
+		else:
+			_cancel_interact_mode()
 		return
 
 	var clicked_grid := _get_grid_from_mouse(global_mouse)
@@ -2139,16 +2142,20 @@ func _show_move_range(unit: TacticsUnit) -> void:
 		return
 
 	var start: Vector2i = unit.grid_pos
-	var occupied_tiles: Dictionary = _get_occupied_tiles()
+	# 起点地形高度（单位当前所站的地形层）
+	var start_height := _get_tile_height(start.x, start.y)
 
-	# BFS
+	# BFS：追踪每个格子的可行走地形高度（解决悬空地形阻挡问题）
+	# visited[key] = {"dist": int, "height": int}
 	var visited: Dictionary = {}
-	var queue: Array = [start]
-	visited[start] = 0
+	var queue: Array = [{"pos": start, "height": start_height}]
+	visited[start] = {"dist": 0, "height": start_height}
 
 	while not queue.is_empty():
-		var current: Vector2i = queue.pop_front()
-		var dist: int = visited[current]
+		var item: Dictionary = queue.pop_front()
+		var current: Vector2i = item["pos"]
+		var current_h: int = item["height"]
+		var dist: int = visited[current]["dist"]
 
 		if dist >= max_range:
 			continue
@@ -2166,29 +2173,33 @@ func _show_move_range(unit: TacticsUnit) -> void:
 			if visited.has(next_pos):
 				continue
 
+			# 使用_get_walkable_height获取目标位置在当前高度附近的可行走地形高度
+			# 解决悬空地形（如桥/屋顶）被错误识别为延伸到地面的实心柱的问题
+			var next_h := _get_walkable_height(next_pos.x, next_pos.y, current_h)
+
 			# 检查高度差（不能超过 1）
-			# 可通过地形：高度差放宽（可无障碍通过，但仍需相邻高度）
-			var current_height := _get_tile_height(current.x, current.y)
-			var next_height := _get_tile_height(next_pos.x, next_pos.y)
-			if absi(next_height - current_height) > 1:
+			if absi(next_h - current_h) > 1:
 				continue
 
-			# 可通过地形：无障碍穿过，即使被其他单位占据
-			if occupied_tiles.has(next_pos) and next_pos != start:
+			# 层级感知的单位阻挡检查：只在目标有效层有单位时阻挡
+			var target_effective_layer := next_h + 1
+			var blocking_unit := _get_unit_at_layer(next_pos.x, next_pos.y, target_effective_layer)
+			if blocking_unit != null and next_pos != start:
 				if _is_tile_passable(next_pos.x, next_pos.y):
 					pass  # 可通过地形，允许穿过
 				else:
 					continue
 
-			visited[next_pos] = dist + 1
-			queue.append(next_pos)
+			visited[next_pos] = {"dist": dist + 1, "height": next_h}
+			queue.append({"pos": next_pos, "height": next_h})
 
 	# 移除起点
 	visited.erase(start)
 
-	# 创建高亮立方体
+	# 创建高亮立方体（使用到达该位置时的可行走高度）
 	for pos in visited.keys():
-		_create_move_range_cube(pos.x, pos.y)
+		var walk_h: int = visited[pos]["height"]
+		_create_move_range_cube(pos.x, pos.y, walk_h)
 		_move_range.append(pos)
 
 	_highlight_type = "move"
@@ -2233,19 +2244,16 @@ func _force_clear_all_wireframes() -> void:
 
 
 ## 创建移动范围高亮立方体
-func _create_move_range_cube(col: int, row: int) -> void:
+## @param walk_h: 可选的可行走地形高度（默认-1表示使用_get_tile_height）
+func _create_move_range_cube(col: int, row: int, walk_h: int = -1) -> void:
 	var cube := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(TILE_SIZE * 0.9, 0.05, TILE_SIZE * 0.9)
 	cube.mesh = mesh
 
-	var height := _get_tile_height(col, row)
+	var height := walk_h if walk_h >= 0 else _get_tile_height(col, row)
 	var pos := _grid_to_world(col, row)
-	# 可通过地形：标识显示在内部（与单位同层），不可通过：显示在表面
-	if _is_tile_passable(col, row):
-		cube.position = Vector3(pos.x, TILE_SIZE * height + 0.02, pos.z)
-	else:
-		cube.position = Vector3(pos.x, TILE_SIZE * (height + 1) + 0.02, pos.z)
+	cube.position = Vector3(pos.x, TILE_SIZE * (height + 1) + 0.02, pos.z)
 
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(0.2, 0.6, 1.0, 0.5)
@@ -2347,8 +2355,8 @@ func _show_action_menu(unit: TacticsUnit) -> void:
 	title.add_theme_color_override("font_color", Color.WHITE)
 	vbox.add_child(title)
 
-	# 移动按钮（始终可用，只要有移动点数）
-	if unit.remaining_move_points > 0:
+	# 移动按钮（空中单位不可移动）
+	if unit.remaining_move_points > 0 and not unit.physics.is_airborne:
 		var move_btn := _create_action_button("移动 (%d步)" % unit.remaining_move_points, _on_action_move)
 		vbox.add_child(move_btn)
 
@@ -2389,6 +2397,10 @@ func _on_action_move() -> void:
 	_close_action_menu()
 
 	if _selected_unit == null:
+		return
+
+	# 空中单位不能通过移动命令移动
+	if _selected_unit.physics.is_airborne:
 		return
 
 	_combat_state = CombatState.MOVE_MODE
@@ -2634,8 +2646,10 @@ func _show_jump_down_range(unit: TacticsUnit) -> void:
 			if not _is_valid_tile(tx, ty):
 				continue
 
-			# 只选择低于当前高度2格及以上的格子
-			var target_height := _get_tile_height(tx, ty)
+			# 使用_get_surface_below找到当前高度之下的最高实体地形
+			# 解决悬空地形问题：桥/屋顶下方的地面也应可跳下
+			var target_terrain_h := _get_surface_below(tx, ty, current_height - 2)
+			var target_height := target_terrain_h + 1
 			var height_diff := current_height - target_height
 			if height_diff >= 2:
 				_create_jump_down_cube(tx, ty, current_height)
@@ -2654,7 +2668,7 @@ func _create_jump_down_cube(col: int, row: int, display_height: int) -> void:
 
 	var pos := _grid_to_world(col, row)
 	# 立方体悬空在角色同一高度，而不是落在地面上
-	cube.position = Vector3(pos.x, TILE_SIZE * (display_height + 1) + 0.04, pos.z)
+	cube.position = Vector3(pos.x, TILE_SIZE * display_height + 0.04, pos.z)
 
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(1.0, 0.3, 0.1, 0.5)  # 红色 = 危险/跳下
@@ -2737,6 +2751,8 @@ func _show_interact_range(unit: TacticsUnit) -> void:
 	_clear_move_range()
 	var center := unit.grid_pos
 	var current_height := _get_unit_effective_layer(unit)
+	# 当前单位所站的地形高度
+	var current_terrain_h := current_height - 1
 
 	# 显示8个相邻格子的白色线框（无论是否可交互）
 	for dy in range(-1, 2):
@@ -2748,21 +2764,24 @@ func _show_interact_range(unit: TacticsUnit) -> void:
 			if not _is_valid_tile(tx, ty):
 				continue
 
-			# 显示白色线框（无论是否可交互）
-			var target_height := _get_tile_height(tx, ty)
-			_create_interact_wireframe_cube(tx, ty, target_height)
+			# 使用_get_walkable_height获取当前高度附近的可行走地形
+			# 解决悬空地形问题：桥下方的地形也应可交互
+			var terrain_h := _get_walkable_height(tx, ty, current_terrain_h)
+			_create_interact_wireframe_cube(tx, ty, terrain_h)
 
+			# 站立层 = 地形高度 + 1，用于高度差判断
+			var target_standing_layer := terrain_h + 1
 			# 高度差 ≤ 1 且可交互的地形才能点击
-			if absi(target_height - current_height) <= 1 and _is_tile_interactive(tx, ty):
-				_move_range.append(Vector3i(tx, ty, target_height))
+			if absi(target_standing_layer - current_height) <= 1 and _is_tile_interactive(tx, ty):
+				_move_range.append(Vector3i(tx, ty, terrain_h))
 
-	# 头顶：同col/row，高度+1（如果可交互）
-	var above_height := current_height + 1
+	# 头顶：同col/row，线框在单位站立层（可能存在天花板地形）
+	var above_height := current_height
 	_create_interact_wireframe_cube(center.x, center.y, above_height)
 	if _is_tile_interactive(center.x, center.y):
 		_move_range.append(Vector3i(center.x, center.y, above_height))
 
-	# 脚下：同col/row，高度-1（如果 >= 0 且可交互）
+	# 脚下：同col/row，线框在单位脚下的地形层
 	if current_height > 0:
 		var below_height := current_height - 1
 		_create_interact_wireframe_cube(center.x, center.y, below_height)
@@ -3438,11 +3457,11 @@ func _get_unit_at_layer(col: int, row: int, layer: int = -1) -> TacticsUnit:
 ## 计算单位的有效高度层（考虑地形高度 + 空中高度）
 ## 用于线框放置和3D选取，确保空中单位的线框显示在正确的高度
 func _get_unit_effective_layer(unit: TacticsUnit) -> int:
+	var terrain_h := _get_tile_height(unit.grid_pos.x, unit.grid_pos.y)
 	if unit.physics.is_airborne and unit.physics.air_height > 0.0:
-		var terrain_h := _get_tile_height(unit.grid_pos.x, unit.grid_pos.y)
 		var air_layers := int(round(unit.physics.air_height / TILE_SIZE))
-		return terrain_h + air_layers
-	return _get_tile_height(unit.grid_pos.x, unit.grid_pos.y)
+		return terrain_h + 1 + air_layers
+	return terrain_h + 1
 
 
 ## 获取被占据的格子 {pos: unit_id}
@@ -3531,9 +3550,11 @@ func _show_throw_target_range(unit: TacticsUnit) -> void:
 				if tl < 0:
 					continue
 
-				# 检查该位置是否有地形方块或单位（排除操作角色自己）
+				# 检查该位置是否有地形方块
 				var has_terrain: bool = _has_terrain_at_layer(tc, tr, tl)
-				var unit_at := _get_unit_at(tc, tr)
+
+				# 检查该层是否有单位（使用层级感知的查找）
+				var unit_at := _get_unit_at_layer(tc, tr, tl)
 				var has_unit: bool = unit_at != null and unit_at != unit
 
 				if not has_terrain and not has_unit:
@@ -3543,22 +3564,76 @@ func _show_throw_target_range(unit: TacticsUnit) -> void:
 				_create_throw_wireframe_cube(tc, tr, tl)
 				_move_range.append(Vector3i(tc, tr, tl))
 
-				# 如果有空中单位且其有效高度层不在当前3x3x3范围内，额外创建一层线框
-				if has_unit and unit_at.physics.is_airborne and unit_at.physics.air_height > 0.0:
-					var unit_effective := _get_unit_effective_layer(unit_at)
-					if unit_effective != tl:
-						# 空中单位在其有效高度层也需要一个线框
-						_create_throw_wireframe_cube(tc, tr, unit_effective)
-						_move_range.append(Vector3i(tc, tr, unit_effective))
-
 	_highlight_type = "throw_target"
 
 
-## 检查指定位置在指定高度层是否有地形方块
+## 检查指定位置在指定高度层是否有地形方块（使用layers数组精确判断）
 func _has_terrain_at_layer(col: int, row: int, layer: int) -> bool:
+	var key := Vector2i(col, row)
+	var data: Dictionary = _terrain_data.get(key, {})
+	var layers: Array = data.get("layers", [])
+	if not layers.is_empty():
+		# 有layers数组：精确判断该层是否有实体地形
+		if layer < 0 or layer >= layers.size():
+			return false
+		return layers[layer] != "__AIR__"
+	# 无layers数组：退回到高度判断
 	var tile_height := _get_tile_height(col, row)
-	# 如果地形高度 >= layer，说明该层有地形方块
 	return tile_height >= layer
+
+
+## 获取指定位置在给定高度附近的可行走地形高度
+## 从from_height出发，找到目标格子中最近的实体地形表面
+## 返回值是地形高度（单位站立层 = 返回值 + 1）
+func _get_walkable_height(col: int, row: int, from_height: int) -> int:
+	var key := Vector2i(col, row)
+	var data: Dictionary = _terrain_data.get(key, {})
+	var layers: Array = data.get("layers", [])
+
+	if layers.is_empty():
+		# 无layers数据，退回到最大高度
+		return _get_tile_height(col, row)
+
+	# 从from_height向下搜索最近的实体地形（单位可踏上的地面）
+	# 允许高度差±1（向上1层或向下1层均可）
+	# 先检查from_height本身，再检查from_height-1，最后from_height+1
+	for check_h in [from_height, from_height - 1, from_height + 1]:
+		if check_h >= 0 and check_h < layers.size() and layers[check_h] != "__AIR__":
+			return check_h
+
+	# 没有在from_height附近找到实体地形，搜索所有实体层找到最近的
+	var best_h := -1
+	var best_dist := 999
+	for layer_idx in range(layers.size()):
+		if layers[layer_idx] != "__AIR__":
+			var dist := absi(layer_idx - from_height)
+			if dist < best_dist:
+				best_dist = dist
+				best_h = layer_idx
+
+	if best_h >= 0:
+		return best_h
+
+	# 完全没有实体地形（不应发生），返回默认高度
+	return _get_tile_height(col, row)
+
+
+## 获取指定位置在给定层之下的最高实体地形层
+## 用于跳下功能：找到单位下方最近的着陆面
+func _get_surface_below(col: int, row: int, below_layer: int) -> int:
+	var key := Vector2i(col, row)
+	var data: Dictionary = _terrain_data.get(key, {})
+	var layers: Array = data.get("layers", [])
+
+	if layers.is_empty():
+		return _get_tile_height(col, row)
+
+	# 从below_layer向下搜索最近的实体地形
+	for layer in range(mini(below_layer, layers.size() - 1), -1, -1):
+		if layers[layer] != "__AIR__":
+			return layer
+
+	return 0
 
 
 ## 统一创建线框立方体（正确的立方体框架，12条边无缝衔接）
@@ -3821,7 +3896,8 @@ func _apply_throw_direction(direction: Vector3i) -> void:
 	_clear_move_range()
 
 	# 投掷动作参数（硬编码）
-	const THROW_IMPULSE: float = 1.5
+	# 冲量1.0：垂直投掷上升1层（air_height=1.0），水平投掷滑动1格
+	const THROW_IMPULSE: float = 1.0
 
 	if _throw_target_unit != null:
 		# 目标有单位：投掷该单位，消耗1点行动点
