@@ -596,9 +596,16 @@ func _load_terrain() -> void:
 			var type_id: String = t.get("type_id", t.get("type", default_type))
 			var height: int = t.get("height", -1)  # -1表示使用TerrainType.base_height
 
+			# 为旧格式生成合成layers数组，确保_get_walkable_height始终有数据
+			var effective_height: int = maxi(height, 0)
+			var synthetic_layers: Array = []
+			for _li in range(effective_height + 1):
+				synthetic_layers.append(type_id)
+
 			_terrain_data[key] = {
 				"type_id": type_id,
 				"height": height,
+				"layers": synthetic_layers,
 				"custom_health": t.get("custom_health", -1),
 				"is_open": t.get("is_open", false)
 			}
@@ -627,9 +634,15 @@ func _load_terrain() -> void:
 					if row_idx < height_grid.size() and col_idx < height_grid[row_idx].size():
 						height_val = height_grid[row_idx][col_idx]
 
+					# 为grid格式生成合成layers数组
+					var grid_layers: Array = []
+					for _li in range(maxi(height_val, 0) + 1):
+						grid_layers.append(str(type_id_val))
+
 					_terrain_data[key] = {
 						"type_id": str(type_id_val),
-						"height": height_val
+						"height": height_val,
+						"layers": grid_layers
 					}
 
 					if _terrain_manager != null:
@@ -1280,7 +1293,23 @@ func _place_battle_units() -> void:
 		else:
 			# -1表示使用地形高度：对于有layers数据的地形，使用地面层高度
 			unit_node.standing_terrain_h = _get_walkable_height(col, row, 0)
+
+		# 安全下界：确保地面单位不会陷入地形
+		var _ground_surface := _get_ground_surface_height(col, row)
+		if unit_node.standing_terrain_h < _ground_surface:
+			print("[TacticsBoard] 放置安全修正: %s (%d,%d) sth=%d < ground_surface=%d → 使用ground_surface" % [
+				unit_id, col, row, unit_node.standing_terrain_h, _ground_surface])
+			unit_node.standing_terrain_h = _ground_surface
+
 		unit_node.position = _grid_to_world_top(col, row, unit_node.standing_terrain_h)
+
+		# 调试：打印初始放置信息
+		var _pkey := Vector2i(col, row)
+		var _pdata: Dictionary = _terrain_data.get(_pkey, {})
+		var _players: Array = _pdata.get("layers", [])
+		var _pheight: int = _pdata.get("height", -999)
+		print("[TacticsBoard] 放置单位: %s pos=(%d,%d) sth=%d unit_y=%.3f terrain_height=%d layers=%s" % [
+			unit_id, col, row, unit_node.standing_terrain_h, unit_node.position.y, _pheight, str(_players)])
 
 		# 设置精灵纹理
 		var sprite: Sprite3D = unit_node.get_node_or_null("Sprite3D")
@@ -2149,8 +2178,11 @@ func _show_move_range(unit: TacticsUnit) -> void:
 		return
 
 	var start: Vector2i = unit.grid_pos
-	# 起点地形高度（使用单位实际站立地形高度，而非最大高度）
-	var start_height := unit.standing_terrain_h
+	# 起点地形高度：使用_get_walkable_height确保爬升逻辑一致
+	var start_height := _get_walkable_height(start.x, start.y, unit.standing_terrain_h)
+	if start_height < 0:
+		start_height = unit.standing_terrain_h
+	print("[TacticsBoard] BFS起点: pos=(%d,%d) standing_terrain_h=%d start_height=%d" % [start.x, start.y, unit.standing_terrain_h, start_height])
 
 	# BFS：追踪每个格子的可行走地形高度（解决悬空地形阻挡问题）
 	# visited[key] = {"dist": int, "height": int}
@@ -2301,6 +2333,20 @@ func _move_unit_to(unit: TacticsUnit, col: int, row: int) -> void:
 	var current_terrain_h := unit.standing_terrain_h
 	var next_terrain_h := _get_walkable_height(col, row, current_terrain_h)
 
+	# 安全下界：确保地面单位不会陷入地形（standing_terrain_h >= 地面表面高度）
+	var ground_surface := _get_ground_surface_height(col, row)
+	if next_terrain_h >= 0 and next_terrain_h < ground_surface:
+		print("[TacticsBoard] _move_unit_to 安全修正: (%d,%d) next_h=%d < ground_surface=%d → 使用ground_surface" % [col, row, next_terrain_h, ground_surface])
+		next_terrain_h = ground_surface
+
+	# 调试：打印目标位置地形数据
+	var _tkey := Vector2i(col, row)
+	var _tdata: Dictionary = _terrain_data.get(_tkey, {})
+	var _tlayers: Array = _tdata.get("layers", [])
+	var _theight: int = _tdata.get("height", -999)
+	print("[TacticsBoard] _move_unit_to: unit=%s (%d,%d)→(%d,%d) cur_h=%d next_h=%d terrain_height=%d layers=%s" % [
+		unit.unit_id, from_pos.x, from_pos.y, col, row, current_terrain_h, next_terrain_h, _theight, str(_tlayers)])
+
 	# ±1范围内无可行走地形（返回-1），该位置不可达，不执行移动
 	if next_terrain_h < 0:
 		print("[TacticsBoard] 不可达位置: (%d,%d) 从高度%d无可行走地形" % [col, row, current_terrain_h])
@@ -2318,6 +2364,23 @@ func _move_unit_to(unit: TacticsUnit, col: int, row: int) -> void:
 	unit.standing_terrain_h = next_terrain_h
 	unit.set_grid_pos(col, row)
 	unit.position = _grid_to_world_top(col, row, next_terrain_h)
+
+	# 调试：验证单位是否在地形表面之上
+	var _terrain_top_y: float = 0.0
+	if not _tlayers.is_empty():
+		# 从下到上找最高连续实体层
+		var _top_layer := -1
+		for _li in range(_tlayers.size()):
+			if _tlayers[_li] != "__AIR__":
+				_top_layer = _li
+			else:
+				break
+		if _top_layer >= 0:
+			_terrain_top_y = TILE_SIZE * float(_top_layer + 1)
+	else:
+		_terrain_top_y = TILE_SIZE * float(_theight + 1) if _theight >= 0 else 0.0
+	print("[TacticsBoard] _move_unit_to: unit_y=%.3f terrain_top_y=%.3f %s" % [
+		unit.position.y, _terrain_top_y, "✓在地形上" if unit.position.y >= _terrain_top_y else "✗陷入地形!"])
 
 	# 更新 _unit_data
 	if _unit_data.has(unit.unit_id):
@@ -3603,6 +3666,7 @@ func _has_terrain_at_layer(col: int, row: int, layer: int) -> bool:
 
 ## 获取指定位置在给定高度附近的可行走地形高度
 ## 从from_height出发，找到目标格子中在±1范围内的实体地形表面
+## 然后从该层向上爬升到连续实体地形的最顶层（如台阶/楼梯）
 ## 返回值是地形高度（单位站立层 = 返回值 + 1）
 ## 如果±1范围内没有可走地形，返回-1表示不可达（不会跳到远处地形）
 func _get_walkable_height(col: int, row: int, from_height: int) -> int:
@@ -3612,18 +3676,60 @@ func _get_walkable_height(col: int, row: int, from_height: int) -> int:
 
 	if layers.is_empty():
 		# 无layers数据，退回到最大高度
-		return _get_tile_height(col, row)
+		var fallback := _get_tile_height(col, row)
+		print("[TacticsBoard] _get_walkable_height: (%d,%d) 无layers数据 from_h=%d → fallback=%d" % [col, row, from_height, fallback])
+		return fallback
 
 	# 从from_height出发搜索±1范围内的实体地形（单位可踏上的地面）
 	# 先检查from_height本身，再检查from_height-1，最后from_height+1
+	var base_h := -1
 	for check_h in [from_height, from_height - 1, from_height + 1]:
 		if check_h >= 0 and check_h < layers.size() and layers[check_h] != "__AIR__":
-			return check_h
+			base_h = check_h
+			break
 
-	# ±1范围内没有可行走地形 → 该位置从当前高度不可达
-	# 例如：单位在地面层(0)走过来，但该位置层0-3都是空气，只有层4有桥面
-	# 此时不应自动跳到桥面层4，而是标记为不可达
-	return -1
+	if base_h < 0:
+		# ±1范围内没有可行走地形 → 该位置从当前高度不可达
+		print("[TacticsBoard] _get_walkable_height: (%d,%d) ±1无可走地形 from_h=%d layers=%s → -1" % [col, row, from_height, str(layers)])
+		return -1
+
+	# 从base_h向上爬升到连续实体地形的最顶层
+	# 例如：["stone_floor", "stone_floor"] → 单位应站在层1顶部，而非陷入层1内部
+	# 例如：["stone_floor", "__AIR__", ..., "stone_floor"] → 单位应站在层0顶部（桥下）
+	var top_h := base_h
+	for climb_h in range(base_h + 1, layers.size()):
+		if layers[climb_h] != "__AIR__":
+			top_h = climb_h
+		else:
+			break  # 遇到空气层停止爬升
+
+	print("[TacticsBoard] _get_walkable_height: (%d,%d) from_h=%d base_h=%d top_h=%d layers=%s" % [col, row, from_height, base_h, top_h, str(layers)])
+	return top_h
+
+
+## 获取地面表面高度（从层0开始的第一个连续实体块的顶部）
+## 作为standing_terrain_h的安全下界，防止单位陷入地形
+## 例如 ["stone_floor", "stone_floor"] → 返回1（站在层1顶部）
+## 例如 ["stone_floor", "__AIR__", "stone_floor"] → 返回0（站在层0顶部，在桥下）
+func _get_ground_surface_height(col: int, row: int) -> int:
+	var key := Vector2i(col, row)
+	var data: Dictionary = _terrain_data.get(key, {})
+	var layers: Array = data.get("layers", [])
+
+	if layers.is_empty():
+		# 无layers数据，直接使用_get_tile_height
+		return _get_tile_height(col, row)
+
+	var top_h := -1
+	for i in range(layers.size()):
+		if layers[i] != "__AIR__":
+			top_h = i
+		else:
+			break  # 遇到空气层停止
+	if top_h < 0:
+		# 全是空气层或无实体层，使用_get_tile_height
+		return _get_tile_height(col, row)
+	return top_h
 
 
 ## 获取指定位置在给定层之下的最高实体地形层
