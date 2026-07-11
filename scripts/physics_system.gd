@@ -97,8 +97,9 @@ class BoardContext:
 
 	## 网格坐标 → 世界坐标（地形顶部 + 空中高度）
 	## @param air_height_offset: 空中相对高度偏移（用于跃过障碍物时的空中位置）
-	func grid_to_world_top(col: int, row: int, air_height_offset: float = 0.0) -> Vector3:
-		return _board._grid_to_world_top(col, row, -1, air_height_offset)
+	## @param override_height: 覆盖地形高度（-1使用最大高度，>=0使用指定高度）
+	func grid_to_world_top(col: int, row: int, air_height_offset: float = 0.0, override_height: int = -1) -> Vector3:
+		return _board._grid_to_world_top(col, row, override_height, air_height_offset)
 
 	# ---- 单位数据更新 ----
 
@@ -146,6 +147,10 @@ class BoardContext:
 		if _board._terrain_manager != null:
 			return _board._terrain_manager.is_terrain_passable(Vector2i(col, row))
 		return true  # 默认可经过
+
+	## 获取指定位置在给定高度附近的可行走地形高度（解决悬空地形问题）
+	func get_walkable_height(col: int, row: int, from_height: int) -> int:
+		return _board._get_walkable_height(col, row, from_height)
 
 	## 应用动能伤害到地形（委托给TerrainManager）
 	func apply_kinetic_damage_to_terrain(col: int, row: int, impact_velocity: Vector3, impact_mass: float) -> int:
@@ -262,9 +267,15 @@ func settle_velocity(unit: TacticsUnit) -> void:
 				])
 				# 不碰撞，继续移动到下一格
 			else:
-				# 获取障碍物高度（单位所在格子的高度）
-				var blocker_height := _ctx.get_tile_height(next_pos.x, next_pos.y)
-				var current_ground_height := _ctx.get_tile_height(unit.grid_pos.x, unit.grid_pos.y)
+				# 获取障碍物高度（使用可行走高度解决悬空地形问题）
+				var current_h := unit.standing_terrain_h
+				var blocker_height := _ctx.get_walkable_height(next_pos.x, next_pos.y, current_h)
+				if blocker_height < 0:
+					# 目标位置无可行走地形（如悬空位置），视为极高障碍不可跃过
+					_handle_horizontal_collision(unit, best_dir, next_pos, "terrain", 0)
+					_align_unit_position(unit)
+					return
+				var current_ground_height := current_h
 
 				# 检查是否可以跃过障碍物单位
 				if unit.physics.can_jump_over(blocker_height, current_ground_height):
@@ -278,9 +289,15 @@ func settle_velocity(unit: TacticsUnit) -> void:
 					_align_unit_position(unit)
 					return
 
-		# 4c. 高度差碰撞（地形）
-		var current_height := _ctx.get_tile_height(unit.grid_pos.x, unit.grid_pos.y)
-		var next_height := _ctx.get_tile_height(next_pos.x, next_pos.y)
+		# 4c. 高度差碰撞（地形）— 使用可行走高度解决悬空地形问题
+		var current_height := unit.standing_terrain_h
+		var next_height := _ctx.get_walkable_height(next_pos.x, next_pos.y, current_height)
+		if next_height < 0:
+			# 目标位置无可行走地形（如只有高层桥面但单位在地面），视为碰撞
+			_log("碰撞(无可行走地形): unit=%s pos=(%d,%d)" % [unit.unit_id, next_pos.x, next_pos.y])
+			_handle_horizontal_collision(unit, best_dir, next_pos, "terrain", 0)
+			_align_unit_position(unit)
+			return
 		var height_diff := next_height - current_height
 
 		if height_diff > 0:
@@ -303,6 +320,7 @@ func settle_velocity(unit: TacticsUnit) -> void:
 			# 后续回合通过重力 + _update_air_height 逐步下降，真正落地时才结算伤害
 			var drop := absi(height_diff)
 			unit.set_grid_pos(next_pos.x, next_pos.y)
+			unit.standing_terrain_h = next_height  # 更新站立地形高度
 			unit.physics.air_height = float(drop)
 			unit.physics.fall_height = float(drop)
 			unit.physics.is_airborne = true
@@ -320,6 +338,7 @@ func settle_velocity(unit: TacticsUnit) -> void:
 
 		# 4d. 移动单位到新格子（考虑空中高度）
 		unit.set_grid_pos(next_pos.x, next_pos.y)
+		unit.standing_terrain_h = next_height  # 更新站立地形高度
 		_ctx.update_unit_data(unit.unit_id, next_pos.x, next_pos.y)
 		_align_unit_position(unit)
 
@@ -343,7 +362,7 @@ func settle_velocity(unit: TacticsUnit) -> void:
 # =============================================================================
 
 ## 将单位的视觉位置严格对齐到其 grid_pos 对应的格子
-## 地面单位：Y 对齐到格子顶部（air_height = 0）
+## 地面单位：Y 对齐到格子顶部（air_height = 0），使用standing_terrain_h
 ## 空中单位：Y 对齐到格子顶部 + air_height（按 TILE_SIZE 对齐到整数层）
 ## X/Z 严格按 grid_pos 计算，消除任何浮点偏移
 func _align_unit_position(unit: TacticsUnit) -> void:
@@ -358,7 +377,8 @@ func _align_unit_position(unit: TacticsUnit) -> void:
 	if unit.physics.is_airborne:
 		aligned_air_height = unit.physics.air_height
 
-	unit.position = _ctx.grid_to_world_top(unit.grid_pos.x, unit.grid_pos.y, aligned_air_height)
+	# 使用standing_terrain_h而非最大高度，解决悬空地形问题
+	unit.position = _ctx.grid_to_world_top(unit.grid_pos.x, unit.grid_pos.y, aligned_air_height, unit.standing_terrain_h)
 
 
 # =============================================================================
@@ -448,7 +468,14 @@ func _check_landing(unit: TacticsUnit) -> void:
 			_apply_deferred_fall_damage(unit)
 		unit.physics.vertical_velocity = 0.0
 		unit.physics.is_airborne = false
-		_log("落地: unit=%s air_height归零 清除垂直速度" % unit.unit_id)
+		# 落地时更新站立地形高度（使用当前位置和当前参考高度）
+		var landing_h := _ctx.get_walkable_height(unit.grid_pos.x, unit.grid_pos.y, unit.standing_terrain_h)
+		if landing_h < 0:
+			# 极端情况：落地位置无可行走地形，使用当前高度作为回退
+			_log("落地警告: unit=%s 位置(%d,%d)无可行走地形，使用当前高度%d" % [unit.unit_id, unit.grid_pos.x, unit.grid_pos.y, unit.standing_terrain_h])
+		else:
+			unit.standing_terrain_h = landing_h
+		_log("落地: unit=%s air_height归零 清除垂直速度 standing_terrain_h=%d" % [unit.unit_id, unit.standing_terrain_h])
 		return
 
 	# 仍在空中，等待重力在后续回合将其拉回地面

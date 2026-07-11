@@ -986,8 +986,9 @@ func _gui_input(event: InputEvent) -> void:
 			if _action_menu_visible:
 				if _combat_state != CombatState.INTERACT_MODE and _combat_state != CombatState.THROW_TARGET_MODE and _combat_state != CombatState.THROW_DIRECTION_MODE and _combat_state != CombatState.JUMP_DOWN_MODE and _combat_state != CombatState.DIRECTION_MODE:
 					return
-			print("[TacticsBoard] _gui_input: 左键点击")
-			_on_left_click(mb)
+			# 注意：_input 已经处理了左键点击，_gui_input 不再重复调用 _on_left_click
+			# 避免同一事件被处理两次导致状态混乱
+			return
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP:
 			_camera_distance = maxf(_camera_distance - ZOOM_SPEED, CAMERA_DISTANCE_MIN)
 			_update_camera_position()
@@ -1273,7 +1274,13 @@ func _place_battle_units() -> void:
 
 		# 设置网格位置
 		unit_node.grid_pos = Vector2i(col, row)
-		unit_node.position = _grid_to_world_top(col, row, unit_height)
+		# 计算初始站立地形高度
+		if unit_height >= 0:
+			unit_node.standing_terrain_h = unit_height
+		else:
+			# -1表示使用地形高度：对于有layers数据的地形，使用地面层高度
+			unit_node.standing_terrain_h = _get_walkable_height(col, row, 0)
+		unit_node.position = _grid_to_world_top(col, row, unit_node.standing_terrain_h)
 
 		# 设置精灵纹理
 		var sprite: Sprite3D = unit_node.get_node_or_null("Sprite3D")
@@ -2142,8 +2149,8 @@ func _show_move_range(unit: TacticsUnit) -> void:
 		return
 
 	var start: Vector2i = unit.grid_pos
-	# 起点地形高度（单位当前所站的地形层）
-	var start_height := _get_tile_height(start.x, start.y)
+	# 起点地形高度（使用单位实际站立地形高度，而非最大高度）
+	var start_height := unit.standing_terrain_h
 
 	# BFS：追踪每个格子的可行走地形高度（解决悬空地形阻挡问题）
 	# visited[key] = {"dist": int, "height": int}
@@ -2176,6 +2183,10 @@ func _show_move_range(unit: TacticsUnit) -> void:
 			# 使用_get_walkable_height获取目标位置在当前高度附近的可行走地形高度
 			# 解决悬空地形（如桥/屋顶）被错误识别为延伸到地面的实心柱的问题
 			var next_h := _get_walkable_height(next_pos.x, next_pos.y, current_h)
+
+			# ±1范围内无可行走地形（返回-1），该位置不可达
+			if next_h < 0:
+				continue
 
 			# 检查高度差（不能超过 1）
 			if absi(next_h - current_h) > 1:
@@ -2286,19 +2297,27 @@ func _move_unit_to(unit: TacticsUnit, col: int, row: int) -> void:
 	if distance <= 0:
 		return
 
+	# 计算目标位置的实际可行走地形高度（解决悬空地形问题）
+	var current_terrain_h := unit.standing_terrain_h
+	var next_terrain_h := _get_walkable_height(col, row, current_terrain_h)
+
+	# ±1范围内无可行走地形（返回-1），该位置不可达，不执行移动
+	if next_terrain_h < 0:
+		print("[TacticsBoard] 不可达位置: (%d,%d) 从高度%d无可行走地形" % [col, row, current_terrain_h])
+		return
+
 	# 高度差：主动移动时，1格落差无坠落伤害
-	var current_height := _get_tile_height(from_pos.x, from_pos.y)
-	var next_height := _get_tile_height(col, row)
-	var height_diff := next_height - current_height
+	var height_diff := next_terrain_h - current_terrain_h
 	if height_diff < 0 and absi(height_diff) == 1:
 		pass  # 1格落差：主动移动不触发坠落伤害
 
 	# 消耗移动点数并执行移动
 	unit.remaining_move_points -= distance
 
-	# 执行移动
+	# 执行移动：使用可行走高度而非最大高度
+	unit.standing_terrain_h = next_terrain_h
 	unit.set_grid_pos(col, row)
-	unit.position = _grid_to_world_top(col, row)
+	unit.position = _grid_to_world_top(col, row, next_terrain_h)
 
 	# 更新 _unit_data
 	if _unit_data.has(unit.unit_id):
@@ -3454,10 +3473,10 @@ func _get_unit_at_layer(col: int, row: int, layer: int = -1) -> TacticsUnit:
 	return null
 
 
-## 计算单位的有效高度层（考虑地形高度 + 空中高度）
-## 用于线框放置和3D选取，确保空中单位的线框显示在正确的高度
+## 计算单位的有效高度层（考虑实际站立地形高度 + 空中高度）
+## 使用standing_terrain_h而非_get_tile_height，解决悬空地形问题
 func _get_unit_effective_layer(unit: TacticsUnit) -> int:
-	var terrain_h := _get_tile_height(unit.grid_pos.x, unit.grid_pos.y)
+	var terrain_h := unit.standing_terrain_h
 	if unit.physics.is_airborne and unit.physics.air_height > 0.0:
 		var air_layers := int(round(unit.physics.air_height / TILE_SIZE))
 		return terrain_h + 1 + air_layers
@@ -3583,8 +3602,9 @@ func _has_terrain_at_layer(col: int, row: int, layer: int) -> bool:
 
 
 ## 获取指定位置在给定高度附近的可行走地形高度
-## 从from_height出发，找到目标格子中最近的实体地形表面
+## 从from_height出发，找到目标格子中在±1范围内的实体地形表面
 ## 返回值是地形高度（单位站立层 = 返回值 + 1）
+## 如果±1范围内没有可走地形，返回-1表示不可达（不会跳到远处地形）
 func _get_walkable_height(col: int, row: int, from_height: int) -> int:
 	var key := Vector2i(col, row)
 	var data: Dictionary = _terrain_data.get(key, {})
@@ -3594,28 +3614,16 @@ func _get_walkable_height(col: int, row: int, from_height: int) -> int:
 		# 无layers数据，退回到最大高度
 		return _get_tile_height(col, row)
 
-	# 从from_height向下搜索最近的实体地形（单位可踏上的地面）
-	# 允许高度差±1（向上1层或向下1层均可）
+	# 从from_height出发搜索±1范围内的实体地形（单位可踏上的地面）
 	# 先检查from_height本身，再检查from_height-1，最后from_height+1
 	for check_h in [from_height, from_height - 1, from_height + 1]:
 		if check_h >= 0 and check_h < layers.size() and layers[check_h] != "__AIR__":
 			return check_h
 
-	# 没有在from_height附近找到实体地形，搜索所有实体层找到最近的
-	var best_h := -1
-	var best_dist := 999
-	for layer_idx in range(layers.size()):
-		if layers[layer_idx] != "__AIR__":
-			var dist := absi(layer_idx - from_height)
-			if dist < best_dist:
-				best_dist = dist
-				best_h = layer_idx
-
-	if best_h >= 0:
-		return best_h
-
-	# 完全没有实体地形（不应发生），返回默认高度
-	return _get_tile_height(col, row)
+	# ±1范围内没有可行走地形 → 该位置从当前高度不可达
+	# 例如：单位在地面层(0)走过来，但该位置层0-3都是空气，只有层4有桥面
+	# 此时不应自动跳到桥面层4，而是标记为不可达
+	return -1
 
 
 ## 获取指定位置在给定层之下的最高实体地形层
@@ -3840,10 +3848,12 @@ func _create_throw_direction_wireframe(col: int, row: int, layer: int, direction
 ## 获取鼠标点击的投掷方向（数学方法计算射线与方向格子相交）
 func _get_throw_direction_3d(screen_pos: Vector2) -> Vector3i:
 	if subviewport_container == null or camera == null:
+		print("[TacticsBoard] _get_throw_direction_3d: subviewport或camera为空")
 		return Vector3i(-1, -1, -1)
 
 	var svp := subviewport_container.get_node_or_null("SubViewport") as SubViewport
 	if svp == null:
+		print("[TacticsBoard] _get_throw_direction_3d: SubViewport为空")
 		return Vector3i(-1, -1, -1)
 
 	var viewport_rect := subviewport_container.get_global_rect()
@@ -3851,6 +3861,7 @@ func _get_throw_direction_3d(screen_pos: Vector2) -> Vector3i:
 	var container_size := viewport_rect.size
 
 	if local_pos.x < 0 or local_pos.y < 0 or local_pos.x > container_size.x or local_pos.y > container_size.y:
+		print("[TacticsBoard] _get_throw_direction_3d: 点击在视口外部 local_pos=%s container=%s" % [local_pos, container_size])
 		return Vector3i(-1, -1, -1)
 
 	var viewport_pos := Vector2(
@@ -3868,6 +3879,7 @@ func _get_throw_direction_3d(screen_pos: Vector2) -> Vector3i:
 	var best_t: float = INF
 	var best_dir := Vector3i(-1, -1, -1)
 	var half := TILE_SIZE * 0.45
+	var hit_count := 0
 
 	for offset in _move_range:
 		if not (offset is Vector3i):
@@ -3887,6 +3899,12 @@ func _get_throw_direction_3d(screen_pos: Vector2) -> Vector3i:
 		if t > 0 and t < best_t:
 			best_t = t
 			best_dir = d
+			hit_count += 1
+
+	if best_dir == Vector3i(-1, -1, -1):
+		print("[TacticsBoard] _get_throw_direction_3d: 未命中任何方向线框 _move_range.size=%d _throw_target_pos=%s" % [_move_range.size(), _throw_target_pos])
+	else:
+		print("[TacticsBoard] _get_throw_direction_3d: 命中方向 %s (命中数=%d) 目标位置=%s" % [best_dir, hit_count, _throw_target_pos])
 
 	return best_dir
 
